@@ -1,7 +1,7 @@
 package routers
 
 import (
-	"reminder/controllers"
+	"iforgetgo/controllers"
 	"github.com/astaxie/beego"
 )
 

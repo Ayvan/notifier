@@ -4,7 +4,7 @@ import (
 	"github.com/astaxie/beego"
 	"fmt"
 	"time"
-	"reminder/models"
+	"iforgetgo/models"
 )
 
 type ServiceController struct {

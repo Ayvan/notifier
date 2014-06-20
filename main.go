@@ -1,10 +1,10 @@
 package main
 
 import (
-	_ "reminder/routers"
+	_ "iforgetgo/routers"
 	"github.com/astaxie/beego"
-	"reminder/controllers"
-	"reminder/models"
+	"iforgetgo/controllers"
+	"iforgetgo/models"
 )
 
 func startService() {
