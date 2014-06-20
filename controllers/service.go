@@ -19,13 +19,16 @@ func (this *ServiceController) DbReader(noticeChan chan models.Notice, noticeCle
 		case <- ch:
 			fmt.Println("Read ok!!!")
 			noticeChan <- notice
-			//noticeCleanChan <- &notice
+			noticeCleanChan <- notice
 		}
 	}
 }
 
 func (this *ServiceController) DbCleaner(noticeCleanChan chan models.Notice) {
-	//<- noticeCleanChan
+	for {
+		<-noticeCleanChan
+		fmt.Println("Clean ok!!!")
+	}
 }
 
 func (this *ServiceController) NoticeWorker(noticeChan chan models.Notice, messageChan chan models.Message) {
