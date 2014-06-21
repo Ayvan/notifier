@@ -13,7 +13,7 @@ type Redis struct {
 }
 
 func (this *Redis) Connect() {
-	connection, error := redis.Dial("tcp", this.Host+":"+this.Port);
+	connection, error := redis.Dial("tcp", this.Host+":"+this.Port)
 
 	if (error != nil) {
 		log.Fatal(error)
@@ -23,5 +23,23 @@ func (this *Redis) Connect() {
 }
 
 func (this *Redis) Delete(key string) {
-	this.connection.Send("DEL", key);
+	this.connection.Send("DEL", key)
+	this.connection.Flush()
 }
+
+func (this *Redis) Get(key string) string {
+	result, error := this.connection.Do("GET", key)
+
+	if(error != nil) {
+		log.Fatal(error)
+	}
+
+	value, error := redis.String(result, error)
+
+	if(error != nil) {
+		log.Fatal(error)
+	}
+
+	return value;
+}
+
