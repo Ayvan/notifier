@@ -43,8 +43,9 @@ func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, re
 	for {
 		notice := <-noticeCleanChan
 		redis.Delete(notice.Id)
+		redis.DeleteFromRange("notices", notice.Id)
 
-		fmt.Printf("Clean ok! Notice id: %d\n", notice.Id)
+		fmt.Printf("Clean ok! Notice id: %s\n", notice.Id)
 	}
 }
 
@@ -77,7 +78,7 @@ func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, mess
 func (this *ServiceController) MessageWorker(messageChan chan *models.Message, channelMessageChan chan *models.ChannelMessage) {
 	for {
 		message := <-messageChan
-		fmt.Println("Message worker ok!", message)
+		fmt.Println("Message worker ok!",message)
 		channelMessage := models.ChannelMessage{1, 1, "message"}
 		channelMessageChan <- &channelMessage
 		/**
@@ -139,13 +140,8 @@ func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.Cha
 	 Метод Channel.Send() должен отформатировать сообщение согласно правилам канала и вызывать соответствующий сервис-провайдер
  */
 func (this *ServiceController) ChannelMessageWorker(channel models.Channel, channelMessageChan chan *models.ChannelMessage) {
-<<<<<<< HEAD
-	message := <-channelMessageChan
-	channel.Send(message)
-=======
 	for {
 		message := <-channelMessageChan
 		channel.Send(message)
 	}
->>>>>>> 3cc56ea8816cbeabc5b0b19d6a4b1786a8402787
 }

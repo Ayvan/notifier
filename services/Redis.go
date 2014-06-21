@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/garyburd/redigo/redis"
 	"log"
+	"fmt"
 )
 
 type Redis struct {
@@ -11,7 +12,7 @@ type Redis struct {
 	connection redis.Conn
 }
 
-func NewRedis (host string, port string) *Redis {
+func NewRedis(host string, port string) *Redis {
 	return &Redis{host , port , nil}
 }
 
@@ -30,16 +31,26 @@ func (this *Redis) Delete(key interface{}) {
 	this.connection.Flush()
 }
 
+func (this *Redis) DeleteFromRange(rangeName string, key string) {
+	this.connection.Send("ZREM", rangeName, key)
+	this.connection.Flush()
+}
+
 func (this *Redis) Get(key string) []string {
+
 	result, error := this.connection.Do("HGETALL", key)
 
 	if (error != nil) {
+		fmt.Println(error)
 		log.Fatal(error)
 	}
 
 	value, error := redis.Strings(result, error)
 
+	fmt.Println(value)
+
 	if (error != nil) {
+		fmt.Println(error)
 		log.Fatal(error)
 	}
 
@@ -50,7 +61,7 @@ func (this *Redis) GetRangeByScore(name string, min int, max int) []string {
 
 	result, error := this.connection.Do("ZRANGEBYSCORE", name, min, max)
 
-	if(error != nil) {
+	if (error != nil) {
 		log.Fatal(error)
 	}
 
