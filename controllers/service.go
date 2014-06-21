@@ -17,7 +17,7 @@ type ServiceController struct {
  */
 func (this *ServiceController) DbReader(noticeChan chan models.Notice, noticeCleanChan chan models.Notice) {
 	ch := time.Tick(2 * time.Second)
-	notice := models.Notice{1}
+	notice := models.Notice{1,"notice","message","20.12.2012 00:00:00", 1,1}
 	for{
 		select {
 		case <- ch:
@@ -45,7 +45,7 @@ func (this *ServiceController) NoticeWorker(noticeChan chan models.Notice, messa
 	for {
 		<-noticeChan
 		fmt.Println("Notice worker ok!")
-		message := models.Message{1}
+		message := models.Message{1,1}
 		messageChan <- message
 		/**
 			обрабатывает полученный notice
@@ -63,7 +63,7 @@ func (this *ServiceController) NoticeWorker(noticeChan chan models.Notice, messa
 func (this *ServiceController) MessageWorker(messageChan chan models.Message, channelMessageChan chan models.ChannelMessage) {
 	for {<-messageChan
 		fmt.Println("Message worker ok!")
-		channelMessage := models.ChannelMessage{1}
+		channelMessage := models.ChannelMessage{1,1,"message"}
 		channelMessageChan <- channelMessage
 		/**
 			получает пользователя (ID) кому отправить
