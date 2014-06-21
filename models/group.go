@@ -2,20 +2,20 @@ package models
 import "fmt"
 
 type Group struct {
-	Id      int
+	Id      string
 	Name    string
-	Owner   int
-	Members []int
+	Owner   string
+	Members []string
 	//Owner *User
 	//Members []*User
 }
 
-func NewGroup(id int, name string, owner int, members []int) *Group {
+func NewGroup(id string, name string, owner string, members []string) *Group {
 	return &Group{id , name , owner , members }
 }
 
-func FindGroup(id int) *Group {
-	return NewGroup(id, "grp", 1, []int{1, 2, 3})
+func FindGroup(id string) *Group {
+	return NewGroup(id, "grp", "1", []string{"1", "2", "3"})
 }
 
 func (this *Group) FindMembers() []*User {

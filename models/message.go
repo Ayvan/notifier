@@ -1,13 +1,13 @@
 package models
 
 type Message struct {
-	Id int
-	Sender int
+	Id string
+	Sender string
 	Receiver *User
 	Message string
 }
 
 
-func NewMessage(id int, sender int, receiver *User, message string) *Message {
+func NewMessage(id string, sender string, receiver *User, message string) *Message {
 	return &Message{id , sender , receiver , message }
 }

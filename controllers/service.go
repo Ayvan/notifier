@@ -18,16 +18,20 @@ type ServiceController struct {
  */
 func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCleanChan chan *models.Notice, redis services.Redis) {
 	ch := time.Tick(2 * time.Second)
-	notice := models.NewNotice(1, 1, "message", time.Now(), 1)
 	for {
 		select {
 		case <-ch:
 
-			redis.Delete("test")
+			notices := models.NewNoticesFromRedis(redis)
 
-			fmt.Println("Read ok!!!")
+		for _, notice := range notices {
 			noticeChan <- notice
 			noticeCleanChan <- notice
+
+			fmt.Println("Notice " + notice.Id + " pushed!")
+		}
+
+			fmt.Println("DbReader finished")
 		}
 	}
 }
@@ -71,7 +75,7 @@ func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, mess
 func (this *ServiceController) MessageWorker(messageChan chan *models.Message, channelMessageChan chan *models.ChannelMessage) {
 	for {
 		message := <-messageChan
-		fmt.Println("Message worker ok!",message)
+		fmt.Println("Message worker ok!", message)
 		channelMessage := models.ChannelMessage{1, 1, "message"}
 		channelMessageChan <- &channelMessage
 		/**
@@ -109,6 +113,6 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 	 Метод Channel.Send() должен отформатировать сообщение согласно правилам канала и вызывать соответствующий сервис-провайдер
  */
 func (this *ServiceController) ChannelMessageWorker(channel models.Channel, channelMessageChan chan *models.ChannelMessage) {
-	message := <- channelMessageChan
+	message := <-channelMessageChan
 	channel.Send(message)
 }
