@@ -82,10 +82,12 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 		<-channelMessageChan
 		fmt.Println("Channel dispatcher ok!")
 
-		channel1 := models.NewChannelEmail()
-		chan1 := make(chan *models.ChannelMessage)
+		channel := models.NewChannelEmail()
+		chanForChannel := make(chan *models.ChannelMessage)
 
-		go this.ChannelMessageWorker(&channel1, chan1)
+		go this.ChannelRouter(channelMessageChan, channel, chanForChannel)
+
+		go this.ChannelMessageWorker(channel, chanForChannel)
 
 		/**
 			создает chan для всех каналов (по 1 на канал)
@@ -95,11 +97,22 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 	}
 }
 
+func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.ChannelMessage, channel models.Channel, chanForChannel chan *models.ChannelMessage) {
+	for {
+		fmt.Println(channel.GetId())
+		//возьмем из очереди сообщение
+		channelMessage := <-channelMessageChan
+		chanForChannel <- channelMessage
+	}
+}
+
 /**
 	Обработчик сообщений, отправленных в канал: получает адрес и сообщение, запускает метод Channel.Send()
 	 Метод Channel.Send() должен отформатировать сообщение согласно правилам канала и вызывать соответствующий сервис-провайдер
  */
 func (this *ServiceController) ChannelMessageWorker(channel models.Channel, channelMessageChan chan *models.ChannelMessage) {
-	message := <- channelMessageChan
-	channel.Send(message)
+	for {
+		message := <-channelMessageChan
+		channel.Send(message)
+	}
 }
