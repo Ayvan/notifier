@@ -6,6 +6,7 @@ type Notice struct {
 	Id       int
 	Group    int
 	Message  string
+
 	Datetime time.Time
 	Author   int
 	//Group *Group

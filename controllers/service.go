@@ -17,13 +17,13 @@ type ServiceController struct {
  */
 func (this *ServiceController) DbReader(noticeChan chan models.Notice, noticeCleanChan chan models.Notice) {
 	ch := time.Tick(2 * time.Second)
-	notice := models.NewNotice(1,1,"message",time.Now(),1)
-	for{
+	notice := models.NewNotice(1, 1, "message", time.Now(), 1)
+	for {
 		select {
-		case <- ch:
+		case <-ch:
 			fmt.Println("Read ok!!!")
-			noticeChan <- *notice
-			noticeCleanChan <- *notice
+		noticeChan <- *notice
+		noticeCleanChan <- *notice
 		}
 	}
 }
@@ -43,16 +43,20 @@ func (this *ServiceController) DbCleaner(noticeCleanChan chan models.Notice) {
  */
 func (this *ServiceController) NoticeWorker(noticeChan chan models.Notice, messageChan chan models.Message) {
 	for {
-		notice := <-noticeChan
+		notice := <-noticeChan // читаем notice
 		fmt.Println("Notice worker ok!", notice)
-		message := models.Message{1,1}
-		messageChan <- message
-		/**
-			обрабатывает полученный notice
-			запрашивает у группы список пользователей
-			определяет список пользователей, кому его отправить
-			отправляет в MessageWorker
-	 	*/
+
+		// получаем группу из нотиса
+		group := models.FindGroup(notice.Group)
+		fmt.Println("group: ", group)
+		//получаем список пользователей группы
+		members := group.FindMembers()
+		fmt.Println("members: ", members)
+		// отправляем в MessageWorker все сообщения
+		for _, member := range members {
+			message := models.NewMessage(notice.Id, notice.Author, member, notice.Message)
+			messageChan <- *message
+		}
 	}
 }
 
@@ -61,9 +65,10 @@ func (this *ServiceController) NoticeWorker(noticeChan chan models.Notice, messa
 	 и отправляет сообщения	в соответствующие каналы, передавая адрес получателя (телефон, email и т.д.)
  */
 func (this *ServiceController) MessageWorker(messageChan chan models.Message, channelMessageChan chan models.ChannelMessage) {
-	for {<-messageChan
-		fmt.Println("Message worker ok!")
-		channelMessage := models.ChannelMessage{1,1,"message"}
+	for {
+		message := <-messageChan
+		fmt.Println("Message worker ok!",message)
+		channelMessage := models.ChannelMessage{1, 1, "message"}
 		channelMessageChan <- channelMessage
 		/**
 			получает пользователя (ID) кому отправить
