@@ -6,10 +6,13 @@ import (
 )
 
 type Redis struct {
-	Host     string
-	Port     string
-
+	Host       string
+	Port       string
 	connection redis.Conn
+}
+
+func NewRedis (host string, port string) *Redis {
+	return &Redis{host , port , nil}
 }
 
 func (this *Redis) Connect() {
@@ -30,13 +33,13 @@ func (this *Redis) Delete(key string) {
 func (this *Redis) Get(key string) string {
 	result, error := this.connection.Do("GET", key)
 
-	if(error != nil) {
+	if (error != nil) {
 		log.Fatal(error)
 	}
 
 	value, error := redis.String(result, error)
 
-	if(error != nil) {
+	if (error != nil) {
 		log.Fatal(error)
 	}
 
