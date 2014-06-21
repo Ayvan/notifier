@@ -23,7 +23,7 @@ func startService() {
 	//запускаем процесс, читающий БД
 	go c.DbReader(noticeChan, noticeCleanChan, redis)
 	//запускаем процесс, удаляющий из БД обработанные записи
-	go c.DbCleaner(noticeCleanChan)
+	go c.DbCleaner(noticeCleanChan, redis)
 	//запускаем воркер уведомлений: он обрабатывает уведомление и решает кому его отправить
 	go c.NoticeWorker(noticeChan, messageChan)
 	//запусукаем воркер сообщений: он получает сообщение и ID получателя (юзера)

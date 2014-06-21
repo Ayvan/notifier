@@ -35,10 +35,12 @@ func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCl
 /**
 	"Чистильщик" БД, получает из chan уведомления и удаляет их
  */
-func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice) {
+func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, redis *services.Redis) {
 	for {
-		<-noticeCleanChan
-		fmt.Println("Clean ok!!!")
+		notice := <-noticeCleanChan
+		redis.Delete(notice.Id)
+
+		fmt.Printf("Clean ok! Notice id: %d\n", notice.Id)
 	}
 }
 
