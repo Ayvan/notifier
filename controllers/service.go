@@ -45,7 +45,7 @@ func (this *ServiceController) NoticeWorker(noticeChan chan models.Notice, messa
 	for {
 		<-noticeChan
 		fmt.Println("Notice worker ok!")
-		message := models.Message{1,1}
+		message := models.Message{1,1,"message"}
 		messageChan <- message
 		/**
 			обрабатывает полученный notice
@@ -81,6 +81,13 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan models.
 	for {
 		<-channelMessageChan
 		fmt.Println("Channel dispatcher ok!")
+
+		channel1 := models.NewChannelEmail()
+		chan1 := make(chan models.ChannelMessage)
+
+		go this.ChannelMessageWorker(&channel1, chan1)
+
+
 		/**
 			создает chan для всех каналов (по 1 на канал)
 			запускает ChannelMessageWorker'ы (от 1 до многих на каждый chan)
@@ -93,6 +100,7 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan models.
 	Обработчик сообщений, отправленных в канал: получает адрес и сообщение, запускает метод Channel.Send()
 	 Метод Channel.Send() должен отформатировать сообщение согласно правилам канала и вызывать соответствующий сервис-провайдер
  */
-func (this *ServiceController) ChannelMessageWorker() {
-
+func (this *ServiceController) ChannelMessageWorker(channel models.Channel, channelMessageChan chan models.ChannelMessage) {
+	message := <- channelMessageChan
+	channel.Send(message)
 }
