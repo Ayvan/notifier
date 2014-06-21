@@ -17,10 +17,10 @@ func NewChannelEmail() ChannelEmail {
 	return channel
 }
 
-func (this *ChannelEmail) Send(message *ChannelMessage) {
+func (this ChannelEmail) Send(message *ChannelMessage) {
 	fmt.Println(message.Message)
 }
 
-func (this *ChannelEmail) GetId() int {
+func (this ChannelEmail) GetId() int {
 	return this.Id
 }

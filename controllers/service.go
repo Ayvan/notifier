@@ -16,7 +16,7 @@ type ServiceController struct {
 	Читатель БД, он запрашивает в БД уведомления, которые надо отправить в ближайшее время,
 	отправляет их дальше, а также решает, удаляем ли это сообщение из БД или нет, удаляемые отправляет в noticeCleanChan
  */
-func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCleanChan chan *models.Notice, redis services.Redis) {
+func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCleanChan chan *models.Notice, redis *services.Redis) {
 	ch := time.Tick(2 * time.Second)
 	for {
 		select {
@@ -39,10 +39,12 @@ func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCl
 /**
 	"Чистильщик" БД, получает из chan уведомления и удаляет их
  */
-func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice) {
+func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, redis *services.Redis) {
 	for {
-		<-noticeCleanChan
-		fmt.Println("Clean ok!!!")
+		notice := <-noticeCleanChan
+		redis.Delete(notice.Id)
+
+		fmt.Printf("Clean ok! Notice id: %d\n", notice.Id)
 	}
 }
 
@@ -95,10 +97,12 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 		<-channelMessageChan
 		fmt.Println("Channel dispatcher ok!")
 
-		channel1 := models.NewChannelEmail()
-		chan1 := make(chan *models.ChannelMessage)
+		channel := models.NewChannelEmail()
+		chanForChannel := make(chan *models.ChannelMessage)
 
-		go this.ChannelMessageWorker(&channel1, chan1)
+		go this.ChannelRouter(channelMessageChan, channel, chanForChannel)
+
+		go this.ChannelMessageWorker(channel, chanForChannel)
 
 		/**
 			создает chan для всех каналов (по 1 на канал)
@@ -108,11 +112,27 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 	}
 }
 
+func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.ChannelMessage, channel models.Channel, chanForChannel chan *models.ChannelMessage) {
+	for {
+		fmt.Println(channel.GetId())
+		//возьмем из очереди сообщение
+		channelMessage := <-channelMessageChan
+		chanForChannel <- channelMessage
+	}
+}
+
 /**
 	Обработчик сообщений, отправленных в канал: получает адрес и сообщение, запускает метод Channel.Send()
 	 Метод Channel.Send() должен отформатировать сообщение согласно правилам канала и вызывать соответствующий сервис-провайдер
  */
 func (this *ServiceController) ChannelMessageWorker(channel models.Channel, channelMessageChan chan *models.ChannelMessage) {
+<<<<<<< HEAD
 	message := <-channelMessageChan
 	channel.Send(message)
+=======
+	for {
+		message := <-channelMessageChan
+		channel.Send(message)
+	}
+>>>>>>> 3cc56ea8816cbeabc5b0b19d6a4b1786a8402787
 }

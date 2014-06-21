@@ -17,13 +17,13 @@ func startService() {
 	channelMessageChan := make(chan *models.ChannelMessage, 100)
 
 	// подключаемся к redis
-	redis := services.Redis{ Host: beego.AppConfig.String("redisHost"), Port: beego.AppConfig.String("redisPort") }
+	redis := services.NewRedis(beego.AppConfig.String("redisHost"), beego.AppConfig.String("redisPort"))
 	redis.Connect()
 
 	//запускаем процесс, читающий БД
 	go c.DbReader(noticeChan, noticeCleanChan, redis)
 	//запускаем процесс, удаляющий из БД обработанные записи
-	go c.DbCleaner(noticeCleanChan)
+	go c.DbCleaner(noticeCleanChan, redis)
 	//запускаем воркер уведомлений: он обрабатывает уведомление и решает кому его отправить
 	go c.NoticeWorker(noticeChan, messageChan)
 	//запусукаем воркер сообщений: он получает сообщение и ID получателя (юзера)

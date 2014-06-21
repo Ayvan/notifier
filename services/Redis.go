@@ -6,10 +6,13 @@ import (
 )
 
 type Redis struct {
-	Host     string
-	Port     string
-
+	Host       string
+	Port       string
 	connection redis.Conn
+}
+
+func NewRedis (host string, port string) *Redis {
+	return &Redis{host , port , nil}
 }
 
 func (this *Redis) Connect() {
