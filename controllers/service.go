@@ -114,7 +114,7 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
  */
 func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models.ChannelMessage) {
 
-	fmt.Println("Channel dispatcher ok!")
+	fmt.Println("ChannelDispatcher: Запущен")
 
 	channels := models.GetChannels()
 	chansForChannels := make([]chan *models.ChannelMessage, len(channels))
@@ -123,6 +123,7 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 		//берем каждый канал, содаем для него
 		chansForChannels[i] = make(chan *models.ChannelMessage)
 		go this.ChannelMessageWorker(channel, chansForChannels[i])
+		fmt.Println("ChannelDispatcher: ", "Создан воркер для канала ",channel.GetName())
 	}
 
 	//запускаем роутер, их может быть много
@@ -140,11 +141,12 @@ func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.Cha
 	for {
 		//возьмем из очереди сообщение
 		channelMessage := <-channelMessageChan
+		fmt.Println("ChannelRouter: ","Получено сообщение", channelMessage)
 		//переберем все каналы
 		for i, channel := range channels {
-			fmt.Println(channel.GetName())
 			//если канал соответствует каналу в сообщении, то отправим
 			if channel.GetName() == channelMessage.Channel {
+				fmt.Println("ChannelRouter: ","Сообщение отправлено в канал", channelMessage.Channel)
 				chansForChannels[i] <- channelMessage
 			}
 		}
@@ -157,7 +159,8 @@ func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.Cha
  */
 func (this *ServiceController) ChannelMessageWorker(channel models.Channel, channelMessageChan chan *models.ChannelMessage) {
 	for {
-		message := <-channelMessageChan
-		channel.Send(message)
+		channelMessage := <-channelMessageChan
+		fmt.Println("ChannelMessageWorker: ","Сообщение отправлено в канал", channelMessage)
+		channel.Send(channelMessage)
 	}
 }

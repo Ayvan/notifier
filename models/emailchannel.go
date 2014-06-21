@@ -11,11 +11,11 @@ type EmailChannel struct {
 
 func NewChannelEmail() EmailChannel {
 	params := []string{"124"}
-	return EmailChannel{"Email",params}
+	return EmailChannel{"Mail",params}
 }
 
 func (this EmailChannel) Send(message *ChannelMessage) {
-	fmt.Println(message.Message)
+	fmt.Println("EmailChannel.Send: ","Отправляем сообщение с текстом '",message.Message,"'")
 }
 
 func (this EmailChannel) GetName() string {

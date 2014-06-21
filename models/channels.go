@@ -2,8 +2,12 @@ package models
 
 func GetChannels() []Channel{
 
-	channels := make([]Channel,1)
+	//число каналов указываем тут
+	channelsNum := 1
 
+	channels := make([]Channel,channelsNum)
+
+	//тут забиваем массив объектами каналов
 	channels[0] = NewChannelEmail()
 
 	return channels
