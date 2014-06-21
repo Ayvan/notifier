@@ -1,5 +1,5 @@
 package models
 
-type Channel struct {
-	Id int
+type Channel interface {
+	Send(message *ChannelMessage)
 }

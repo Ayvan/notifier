@@ -10,10 +10,10 @@ import (
 func startService() {
 	c := controllers.ServiceController{}
 	// for i:=0;i<N;i++ { запуск нескольких горутин воркеров
-	noticeChan := make(chan models.Notice, 100)
-	noticeCleanChan := make(chan models.Notice,	100)
-	messageChan := make(chan models.Message, 100)
-	channelMessageChan := make(chan models.ChannelMessage, 100)
+	noticeChan := make(chan *models.Notice, 100)
+	noticeCleanChan := make(chan *models.Notice,	100)
+	messageChan := make(chan *models.Message, 100)
+	channelMessageChan := make(chan *models.ChannelMessage, 100)
 
 	//запускаем процесс, читающий БД
 	go c.DbReader(noticeChan,noticeCleanChan)
