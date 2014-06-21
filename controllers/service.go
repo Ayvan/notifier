@@ -41,7 +41,7 @@ func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCl
  */
 func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, redis *services.Redis) {
 	for {
-//		<-noticeCleanChan
+		//		<-noticeCleanChan
 		notice := <-noticeCleanChan
 		redis.Delete(notice.Id)
 		redis.DeleteFromRange("notices", notice.Id)
@@ -73,8 +73,9 @@ func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, mess
 }
 
 /**
-	Обработчик сообщений: получает сообщения и ID пользователей, из User получает список каналов и их параметры
-	 и отправляет сообщения	в соответствующие каналы, передавая адрес получателя (телефон, email и т.д.)
+	Обработчик сообщений: получает сообщение и пользователей,
+	из User получает список каналов
+	и отправляет сообщения	в соответствующие каналы, передавая адрес получателя (телефон, email и т.д.)
  */
 func (this *ServiceController) MessageWorker(messageChan chan *models.Message, channelMessageChan chan *models.ChannelMessage) {
 	for {
@@ -82,12 +83,15 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
 		case message := <-messageChan:
 
 			fmt.Println("MessageWorker: ", "Принял", message)
+
 			//Каналы - в дальнейшем будут выбираться из базы настроек пользователя
 			var channels = []string{"Phone", "Mail"}
 
+			//Получатель
 			receiver := message.Receiver
 
 		for _, channel := range channels {
+			//Формируем сообщение для оправки в воркер каналов
 			channelMessage := models.NewChannelMessage("1", channel, message.Message, receiver.Phone)
 			channelMessageChan <- channelMessage
 			fmt.Println("MessageWorker: ", "Отправлено в очередь", channelMessage)
@@ -95,8 +99,6 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
 
 			fmt.Println("MessageWorker: ", "Message worker ok!")
 		}
-
-
 
 		/**
 			получает пользователя (ID) кому отправить
@@ -111,30 +113,27 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
 	которые будут обрабатывать сообщения, адресованные их каналам
  */
 func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models.ChannelMessage) {
-	for {
-		<-channelMessageChan
-		fmt.Println("Channel dispatcher ok!")
 
+	fmt.Println("Channel dispatcher ok!")
 
-		channels := models.GetChannels()
-		chansForChannels := make([]chan *models.ChannelMessage, len(channels))
+	channels := models.GetChannels()
+	chansForChannels := make([]chan *models.ChannelMessage, len(channels))
 
-		for i, channel := range channels {
-			//берем каждый канал, содаем для него
-			chansForChannels[i] = make(chan *models.ChannelMessage)
-			go this.ChannelMessageWorker(channel, chansForChannels[i])
-		}
-
-		//запускаем роутер, их может быть много
-		go this.ChannelRouter(channelMessageChan, channels, chansForChannels)
-
-
-		/**
-			создает chan для всех каналов (по 1 на канал)
-			запускает ChannelMessageWorker'ы (от 1 до многих на каждый chan)
-			роутит сообщения в каналы, прослушиваемые несколькими (от 1 на канал) ChannelMessageWorker
-	 	*/
+	for i, channel := range channels {
+		//берем каждый канал, содаем для него
+		chansForChannels[i] = make(chan *models.ChannelMessage)
+		go this.ChannelMessageWorker(channel, chansForChannels[i])
 	}
+
+	//запускаем роутер, их может быть много
+	go this.ChannelRouter(channelMessageChan, channels, chansForChannels)
+
+	/**
+		создает chan для всех каналов (по 1 на канал)
+		запускает ChannelMessageWorker'ы (от 1 до многих на каждый chan)
+		роутит сообщения в каналы, прослушиваемые несколькими (от 1 на канал) ChannelMessageWorker
+	 */
+
 }
 
 func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.ChannelMessage, channels []models.Channel, chansForChannels []chan *models.ChannelMessage) {
