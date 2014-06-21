@@ -103,6 +103,7 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 			go this.ChannelMessageWorker(channel, chansForChannels[i])
 		}
 
+		//запускаем роутер, их может быть много
 		go this.ChannelRouter(channelMessageChan, channels, chansForChannels)
 
 
@@ -116,11 +117,15 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 
 func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.ChannelMessage, channels []models.Channel, chansForChannels []chan *models.ChannelMessage) {
 	for {
+		//возьмем из очереди сообщение
+		channelMessage := <-channelMessageChan
+		//переберем все каналы
 		for i,channel := range channels {
 			fmt.Println(channel.GetName())
-			//возьмем из очереди сообщение
-			channelMessage := <-channelMessageChan
+			//если канал соответствует каналу в сообщении, то отправим
+			if channel.GetName() == channelMessage.Channel{
 			chansForChannels[i] <- channelMessage
+			}
 		}
 	}
 }
