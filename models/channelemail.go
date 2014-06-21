@@ -4,23 +4,20 @@ import (
 	"fmt"
 )
 
-type ChannelEmail struct {
-	Id int
+type EmailChannel struct {
 	Name string
 	Params []string
 }
 
-func NewChannelEmail() ChannelEmail {
+func NewChannelEmail() EmailChannel {
 	params := []string{"124"}
-	channel := ChannelEmail{1,"email",params}
-
-	return channel
+	return EmailChannel{"Email",params}
 }
 
-func (this ChannelEmail) Send(message *ChannelMessage) {
+func (this EmailChannel) Send(message *ChannelMessage) {
 	fmt.Println(message.Message)
 }
 
-func (this ChannelEmail) GetId() int {
-	return this.Id
+func (this EmailChannel) GetName() string {
+	return this.Name
 }

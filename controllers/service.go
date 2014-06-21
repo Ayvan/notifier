@@ -91,12 +91,18 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 		<-channelMessageChan
 		fmt.Println("Channel dispatcher ok!")
 
-		channel := models.NewChannelEmail()
-		chanForChannel := make(chan *models.ChannelMessage)
 
-		go this.ChannelRouter(channelMessageChan, channel, chanForChannel)
+		channels := models.GetChannels()
+		chansForChannels := make([]chan *models.ChannelMessage,len(channels))
 
-		go this.ChannelMessageWorker(channel, chanForChannel)
+		for i,channel := range channels {
+			//берем каждый канал, содаем для него
+			chansForChannels[i] = make(chan *models.ChannelMessage)
+			go this.ChannelMessageWorker(channel, chansForChannels[i])
+		}
+
+		go this.ChannelRouter(channelMessageChan, channels, chansForChannels)
+
 
 		/**
 			создает chan для всех каналов (по 1 на канал)
@@ -106,12 +112,14 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 	}
 }
 
-func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.ChannelMessage, channel models.Channel, chanForChannel chan *models.ChannelMessage) {
+func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.ChannelMessage, channels []models.Channel, chansForChannels []chan *models.ChannelMessage) {
 	for {
-		fmt.Println(channel.GetId())
-		//возьмем из очереди сообщение
-		channelMessage := <-channelMessageChan
-		chanForChannel <- channelMessage
+		for i,channel := range channels {
+			fmt.Println(channel.GetName())
+			//возьмем из очереди сообщение
+			channelMessage := <-channelMessageChan
+			chansForChannels[i] <- channelMessage
+		}
 	}
 }
 
