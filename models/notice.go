@@ -24,7 +24,7 @@ func NewNotice(id string, group string, message string, datetime time.Time, auth
 
 func NewNoticesFromRedis(redis *services.Redis) []*Notice {
 
-	results := redis.GetRangeByScore("notices", 0, 2403150062)
+	results := redis.GetRangeByScore("notices", 0, 1703150062)
     notices := make([]*Notice, len(results), len(results))
 
 	for i, noticeKey :=range results {

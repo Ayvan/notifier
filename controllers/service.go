@@ -41,6 +41,7 @@ func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCl
  */
 func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, redis *services.Redis) {
 	for {
+//		<-noticeCleanChan
 		notice := <-noticeCleanChan
 		redis.Delete(notice.Id)
 		redis.DeleteFromRange("notices", notice.Id)
@@ -77,10 +78,26 @@ func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, mess
  */
 func (this *ServiceController) MessageWorker(messageChan chan *models.Message, channelMessageChan chan *models.ChannelMessage) {
 	for {
-		message := <-messageChan
-		fmt.Println("Message worker ok!",message)
-		channelMessage := models.ChannelMessage{1, 1, "message"}
-		channelMessageChan <- &channelMessage
+		select {
+		case message := <-messageChan:
+
+			fmt.Println("MessageWorker: ", "Принял", message)
+			//Каналы - в дальнейшем будут выбираться из базы настроек пользователя
+			var channels = []string{"Phone", "Mail"}
+
+			receiver := message.Receiver
+
+		for _, channel := range channels {
+			channelMessage := models.NewChannelMessage("1", channel, message.Message, receiver.Phone)
+			channelMessageChan <- channelMessage
+			fmt.Println("MessageWorker: ", "Отправлено в очередь", channelMessage)
+		}
+
+			fmt.Println("MessageWorker: ", "Message worker ok!")
+		}
+
+
+
 		/**
 			получает пользователя (ID) кому отправить
 			запрашивает у UserModel список каналов
@@ -100,9 +117,9 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 
 
 		channels := models.GetChannels()
-		chansForChannels := make([]chan *models.ChannelMessage,len(channels))
+		chansForChannels := make([]chan *models.ChannelMessage, len(channels))
 
-		for i,channel := range channels {
+		for i, channel := range channels {
 			//берем каждый канал, содаем для него
 			chansForChannels[i] = make(chan *models.ChannelMessage)
 			go this.ChannelMessageWorker(channel, chansForChannels[i])
@@ -125,11 +142,11 @@ func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.Cha
 		//возьмем из очереди сообщение
 		channelMessage := <-channelMessageChan
 		//переберем все каналы
-		for i,channel := range channels {
+		for i, channel := range channels {
 			fmt.Println(channel.GetName())
 			//если канал соответствует каналу в сообщении, то отправим
-			if channel.GetName() == channelMessage.Channel{
-			chansForChannels[i] <- channelMessage
+			if channel.GetName() == channelMessage.Channel {
+				chansForChannels[i] <- channelMessage
 			}
 		}
 	}
