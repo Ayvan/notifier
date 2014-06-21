@@ -17,7 +17,7 @@ func NewChannelEmail() ChannelEmail {
 	return channel
 }
 
-func (this *ChannelEmail) Send(message ChannelMessage) {
+func (this *ChannelEmail) Send(message *ChannelMessage) {
 	fmt.Println(message.Message)
 }
 
