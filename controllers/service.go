@@ -17,13 +17,13 @@ type ServiceController struct {
  */
 func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCleanChan chan *models.Notice) {
 	ch := time.Tick(2 * time.Second)
-	notice := models.Notice{1,"notice","message","20.12.2012 00:00:00", 1,1}
+	notice := models.NewNotice(1,1,"message",time.Now(),1)
 	for{
 		select {
 		case <- ch:
 			fmt.Println("Read ok!!!")
-			noticeChan <- &notice
-			noticeCleanChan <- &notice
+			noticeChan <- notice
+			noticeCleanChan <- notice
 		}
 	}
 }
