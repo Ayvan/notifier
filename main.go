@@ -17,7 +17,7 @@ func startService() {
 	channelMessageChan := make(chan *models.ChannelMessage, 100)
 
 	// подключаемся к redis
-	redis := services.Redis{ Host: beego.AppConfig.String("redisHost"), Port: beego.AppConfig.String("redisPort") }
+	redis := services.NewRedis(beego.AppConfig.String("redisHost"), beego.AppConfig.String("redisPort"))
 	redis.Connect()
 
 	//запускаем процесс, читающий БД
