@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"os/signal"
 	_ "iforgetgo/routers"
 	"github.com/astaxie/beego"
 	"iforgetgo/controllers"
@@ -9,12 +12,18 @@ import (
 )
 
 func startService() {
+
 	c := controllers.ServiceController{}
+	c.InitService()
 	// for i:=0;i<N;i++ { запуск нескольких горутин воркеров
 	noticeChan := make(chan *models.Notice, 100)
 	noticeCleanChan := make(chan *models.Notice, 100)
 	messageChan := make(chan *models.Message, 100)
 	channelMessageChan := make(chan *models.ChannelMessage, 100)
+
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, os.Kill)
 
 	// подключаемся к redis
 	redis := services.NewRedis(beego.AppConfig.String("redisHost"), beego.AppConfig.String("redisPort"))
@@ -22,7 +31,7 @@ func startService() {
 	//запускаем процесс, читающий БД
 	go c.DbReader(noticeChan, noticeCleanChan, redis)
 	//запускаем процесс, удаляющий из БД обработанные записи
-	// go c.DbCleaner(noticeCleanChan, redis)
+	//go c.DbCleaner(noticeCleanChan, redis)
 	//запускаем воркер уведомлений: он обрабатывает уведомление и решает кому его отправить
 	go c.NoticeWorker(noticeChan, messageChan, redis)
 	//запусукаем воркер сообщений: он получает сообщение и ID получателя (юзера)
@@ -31,10 +40,16 @@ func startService() {
 	//запусаем диспетчер каналов
 	//создает chan для каждого канала и воркеры для обработки этих chan
 	go c.ChannelDispatcher(channelMessageChan)
+
+	// останов сервера по Ctrl-C
+	<-sigChan
+	c.Stop()
+	fmt.Println("Сервер успешно остановлен.")
+	os.Exit(0)
 }
 
 func main() {
 	startService() //
-	beego.Run()
+	//beego.Run()
 }
 
