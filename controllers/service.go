@@ -84,7 +84,8 @@ func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, mess
 	из User получает список каналов
 	и отправляет сообщения	в соответствующие каналы, передавая адрес получателя (телефон, email и т.д.)
  */
-func (this *ServiceController) MessageWorker(messageChan chan *models.Message, channelMessageChan chan *models.ChannelMessage, redis *services.Redis) {
+func (this *ServiceController) MessageWorker(messageChan chan *models.Message, channelMessageChan chan *models.ChannelMessage, redis services.Redis) {
+	redis.Connect()
 	for {
 		select {
 		case message := <-messageChan:
