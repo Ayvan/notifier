@@ -13,7 +13,7 @@ type EmailChannel struct {
 }
 
 func NewEmailChannel() *EmailChannel {
-	provider := services.NewSmsServiceProvider(beego.AppConfig.String("sms_gate_url"), beego.AppConfig.String("sms_gate_user"), beego.AppConfig.String("sms_gate_pass"))
+	provider := services.NewSmtpMailServiceProvider(beego.AppConfig.String("gmailUsername"), beego.AppConfig.String("gmailPassword"), beego.AppConfig.String("gmailHost"), beego.AppConfig.String("gmailPort"))
 	return &EmailChannel{"Mail",provider}
 }
 
