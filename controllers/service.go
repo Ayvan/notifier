@@ -76,6 +76,7 @@ func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, mess
 			messageChan <- message
 		}
 	}
+	redis.Disconnect()
 }
 
 /**
@@ -96,12 +97,12 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
 
 		for _, address := range addresses {
 			//Формируем сообщение для оправки в воркер каналов
-			channelMessage := models.NewChannelMessage("1", address.Channel, message.Message, address.Address)
+			channelMessage := models.NewChannelMessage("1", address.Channel, message.Message, address.Address, "sadasd")
 			channelMessageChan <- channelMessage
 			fmt.Println("MessageWorker: ", "Отправлено в очередь", channelMessage)
 		}
 
-			fmt.Println("MessageWorker: ", "Message worker ok!", receiver)
+			fmt.Println("MessageWorker: ", "Message worker ok!")
 		}
 
 		/**
@@ -110,6 +111,7 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
 			отправляет в ChannelDispatcher сообщение и номер канала
 	 	*/
 	}
+	redis.Disconnect()
 }
 
 /**
