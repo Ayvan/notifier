@@ -78,7 +78,7 @@ func (this *Redis) GetMembers(key string) []string {
 	return value
 }
 
-func (this *Redis) GetRangeByScore(name string, min int, max int) []string {
+func (this *Redis) GetRangeByScore(name string, min int, max int64) []string {
 
 	result, error := this.connection.Do("ZRANGEBYSCORE", name, min, max)
 

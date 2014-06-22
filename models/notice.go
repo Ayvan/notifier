@@ -23,7 +23,10 @@ func NewNotice(id string, group string, message string, datetime time.Time, auth
 
 func NewNoticesFromRedis(redis services.Redis) []*Notice {
 
-	results := redis.GetRangeByScore("notices", 0, 1703150062)
+	currTime :=time.Now().Unix()
+
+	//Выбирает все записи, которые были до текущего времени
+	results := redis.GetRangeByScore("notices", 0, currTime)
 	notices := make([]*Notice, len(results), len(results))
 
 	for i, noticeKey := range results {
