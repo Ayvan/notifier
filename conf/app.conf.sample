@@ -1,0 +1,16 @@
+appname = iforgetgo
+httpport = 8080
+runmode = dev
+
+redisHost = 127.0.0.1
+redisPort = 6379
+
+sms_gate_url = https://example.com/send_sms.php
+sms_gate_user = user
+sms_gate_pass = pass
+sms_gate_from =
+
+gmailUsername = test@example.com
+gmailPassword = abc123
+gmailHost = smtp.example.com
+gmailPort = 587
