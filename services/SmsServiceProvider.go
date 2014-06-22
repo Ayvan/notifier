@@ -1,27 +1,26 @@
 package services
 
 import (
-	"log"
-	"fmt"
 	"net/http"
 	"net/url"
-	"iforgetgo/models"
+	"errors"
 )
 
 type SmsServiceProvider struct {
-	host       string // https://www.stramedia.ru/modules/send_sms.php
-	user       string // kreddy
-	pass       string // Ht2411s
-	from       string //89269116791
+	host       string
+	user       string
+	pass       string
+	from       string
+	runmode    bool
 
 }
 
-func NewSmsServiceProvider(host string, user string, pass  string) *SmsServiceProvider {
+func NewSmsServiceProvider(host string, user string, pass string, from string, runmode bool) *SmsServiceProvider {
 
-	return &SmsServiceProvider{host , user , pass, "89269116791"}
+	return &SmsServiceProvider{host , user , pass, from, runmode}
 }
 
-func (this *SmsServiceProvider) Send(message *models.ChannelMessage) {
+func (this *SmsServiceProvider) Send(address string, message string) error {
 
 	// Подготовка данных для POST
 	values := make(url.Values)
@@ -36,15 +35,17 @@ func (this *SmsServiceProvider) Send(message *models.ChannelMessage) {
 	values.Add("dlrmask", "31")
 
 	// Submit form
-	resp, err := http.PostForm(this.host, values)
-	if err != nil {
-		log.Fatal(err)
+	if this.runmode {
+		resp, error := http.PostForm(this.host, values)
+		if error != nil {
+			return error
+		}
+		defer resp.Body.Close()
+
+		if resp.ContentLength == 0 {
+			return errors.New("SMS Gate Error")
+		}
+		return nil
 	}
-	defer resp.Body.Close()
-
-	if resp.ContentLength == 0 {
-		log.Fatal("SMS Gate Error")
-	}
-
-
+	return nil
 }

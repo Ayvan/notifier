@@ -6,13 +6,20 @@ import (
 )
 
 type SmsChannel struct {
-	Name string
-	Params []string
+	Name     string
+	provider services.ServiceProvider
 }
 
 func NewSmsChannel() *SmsChannel {
-	params := []string{"124"}
-	return &SmsChannel{"Phone",params}
+	runmode := beego.AppConfig.String("runmode") != "dev"
+	provider := services.NewSmsServiceProvider(
+		beego.AppConfig.String("sms_gate_url"),
+		beego.AppConfig.String("sms_gate_user"),
+		beego.AppConfig.String("sms_gate_pass"),
+		beego.AppConfig.String("sms_gate_from"),
+		runmode)
+
+	return &SmsChannel{"Phone", provider}
 }
 
 func (this *SmsChannel) Send(message *ChannelMessage) {
