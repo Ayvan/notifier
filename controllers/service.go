@@ -25,12 +25,14 @@ func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCl
 
 			notices := models.NewNoticesFromRedis(redis)
 
-		for _, notice := range notices {
-			noticeChan <- notice
-			noticeCleanChan <- notice
+			for _, notice := range notices {
+				if (notice != nil) {
+					noticeChan <- notice
+					noticeCleanChan <- notice
 
-			fmt.Println("Notice " + notice.Id + " pushed!")
-		}
+					fmt.Println("Notice " + notice.Id + " pushed!")
+				}
+			}
 
 			fmt.Println("DbReader finished")
 		}
