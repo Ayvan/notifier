@@ -26,6 +26,10 @@ func (this *Redis) Connect() {
 	this.connection = connection
 }
 
+func (this *Redis) Disconnect() {
+	this.connection.Close()
+}
+
 func (this *Redis) Delete(key interface{}) {
 	this.connection.Send("DEL", key)
 	this.connection.Flush()

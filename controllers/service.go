@@ -35,6 +35,7 @@ func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCl
 			fmt.Println("DbReader finished")
 		}
 	}
+	redis.Disconnect()
 }
 
 /**
@@ -50,6 +51,7 @@ func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, re
 
 		fmt.Printf("Clean ok! Notice id: %s\n", notice.Id)
 	}
+	redis.Disconnect()
 }
 
 /**
