@@ -78,6 +78,15 @@ func main() {
 			userFirstName,
 		)
 
+		// добавляем адреса пользователю
+		connection.Send(
+			"HMSET",
+			"user:"+user+":addresses",
+			"email",
+			"test@example.com",
+			"phone",
+			"00000000",
+		)
 
 	}
 
