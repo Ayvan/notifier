@@ -22,7 +22,7 @@ func NewNotice(id string, group string, message string, datetime time.Time, auth
 	return &Notice{id , group , message , datetime , author }
 }
 
-func NewNoticesFromRedis(redis *services.Redis) []*Notice {
+func NewNoticesFromRedis(redis services.Redis) []*Notice {
 
 	results := redis.GetRangeByScore("notices", 0, 1703150062)
     notices := make([]*Notice, len(results), len(results))

@@ -16,7 +16,8 @@ type ServiceController struct {
 	Читатель БД, он запрашивает в БД уведомления, которые надо отправить в ближайшее время,
 	отправляет их дальше, а также решает, удаляем ли это сообщение из БД или нет, удаляемые отправляет в noticeCleanChan
  */
-func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCleanChan chan *models.Notice, redis *services.Redis) {
+func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCleanChan chan *models.Notice, redis services.Redis) {
+	redis.Connect()
 	ch := time.Tick(2 * time.Second)
 	for {
 		select {
@@ -39,7 +40,8 @@ func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCl
 /**
 	"Чистильщик" БД, получает из chan уведомления и удаляет их
  */
-func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, redis *services.Redis) {
+func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, redis services.Redis) {
+	redis.Connect()
 	for {
 		//		<-noticeCleanChan
 		notice := <-noticeCleanChan
