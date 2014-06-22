@@ -20,8 +20,8 @@ func NewSmsServiceProvider(host string, user string, pass string, from string, r
 	return &SmsServiceProvider{host , user , pass, from, runmode}
 }
 
-func (this *SmsServiceProvider) Send(address string, message string) error {
-
+func (this *SmsServiceProvider) Send(userName, address, message string) {
+	_ = userName
 	// Подготовка данных для POST
 	values := make(url.Values)
 	values.Set("username", this.user)

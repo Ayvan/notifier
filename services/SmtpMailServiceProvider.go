@@ -27,9 +27,9 @@ func NewSmtpMailServiceProvider(username, password, host, port string) *SmtpMail
 	return &SmtpMailServiceProvider{username, password, host, port, auth}
 }
 
-func (this *SmtpMailServiceProvider) Send(userName, userEmail, message string) error {
+func (this *SmtpMailServiceProvider) Send(userName, address, message string) {
 	from := mail.Address{"iForget", this.Username}
-	to := mail.Address{userName, userEmail}
+	to := mail.Address{userName, address}
 	body := message
 	subject := "Напоминание"
 

@@ -2,20 +2,24 @@ package models
 
 import (
 	"fmt"
+	"github.com/astaxie/beego"
+	"iforgetgo/services"
 )
 
 type EmailChannel struct {
 	Name string
-	Params []string
+	provider services.ServiceProvider
+
 }
 
 func NewEmailChannel() *EmailChannel {
-	params := []string{"124"}
-	return &EmailChannel{"Mail",params}
+	provider := services.NewSmsServiceProvider(beego.AppConfig.String("sms_gate_url"), beego.AppConfig.String("sms_gate_user"), beego.AppConfig.String("sms_gate_pass"))
+	return &EmailChannel{"Mail",provider}
 }
 
 func (this *EmailChannel) Send(message *ChannelMessage) {
 	msg := this.prepareMessage(message.Message)
+	this.provider.Send(message.UserName, message.Address, msg)
 	fmt.Println("EmailChannel.Send: ","Отправляем сообщение с текстом '",msg,"'")
 }
 
