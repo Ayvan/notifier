@@ -10,8 +10,11 @@ import (
 	"time"
 )
 
+import m "math/rand"
+
 func main() {
 
+	firstNames := [50]string { "Marceline","Shawnee", "Ned", "Yesenia", "Danika", "Randa", "Fernande", "Lenora", "Beatris", "Clifford", "Lynelle", "Shizuko", "Robbyn", "Genny", "Monroe", "Kattie", "Liz", "Dimple", "Merlin", "Vincenzo", "Joann", "Ciera", "Lakia", "Yon", "Drucilla", "Tandra", "Abby", "Lynne", "Edythe", "Debbie", "Karen", "Raven", "Merna", "Chi", "Tammy", "Altha", "Malika", "Nichole", "Jeannetta", "Joy", "Arletta", "Ying", "Blanch", "Jerlene", "Marvel", "Lizabeth", "Ambrose", "Tammie", "Trenton", "Renae" }
 	connection, _ := redis.Dial("tcp", beego.AppConfig.String("redisHost")+":"+beego.AppConfig.String("redisPort"))
 
 	fmt.Println("Generating data...")
@@ -32,6 +35,7 @@ func main() {
 		notice := randString(20)
 		group := randString(15)
 		user := randString(10)
+		userFirstName := firstNames[m.Intn(len(firstNames))]
 		timestamp := time.Now().Unix() + 10
 
 		connection.Send(
@@ -52,7 +56,7 @@ func main() {
 		// создаем GROUP
 		connection.Send(
 			"HMSET",
-				"groups:"+group,
+				"group:"+group,
 			"owner",
 				"user:"+user,
 			"name",
@@ -62,8 +66,16 @@ func main() {
 		// добавляем пользователя в созданную группу
 		connection.Send(
 			"SADD",
-					"groups:"+group+":members",
+					"group:"+group+":members",
 				"user:"+user,
+		)
+
+		// создаем пользователя
+		connection.Send(
+			"HMSET",
+				"user:"+user,
+			"name",
+			userFirstName,
 		)
 
 
