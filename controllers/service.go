@@ -96,7 +96,8 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
 			addresses := models.FindUserAddresses(message.Receiver, redis)
 
 			//Получатель
-			receiver := models.FindUser(message.Receiver)
+			receiver := models.FindUser(message.Receiver, redis)
+
 		for _, address := range addresses {
 			//Формируем сообщение для оправки в воркер каналов
 			channelMessage := models.NewChannelMessage("1", address.Channel, message.Message, address.Address, receiver.Name)

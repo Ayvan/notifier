@@ -1,6 +1,8 @@
 package models
 
-import "fmt"
+import (
+	"iforgetgo/services"
+)
 
 type User struct {
 	Id        string
@@ -12,7 +14,11 @@ func NewUser(id string, name string) *User {
 }
 
 
-func FindUser(id string) *User {
-	name := fmt.Sprintf("user %d", id)
-	return NewUser(id, name)
+func FindUser(id string, redis services.Redis) *User {
+
+	result := redis.Get(id)
+
+	userName := result[2]
+
+	return NewUser(id, userName)
 }
