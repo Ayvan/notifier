@@ -10,28 +10,34 @@ import (
 )
 
 type SmtpMailServiceProvider struct {
-	Username    string
-	Password    string
-	Host        string
-	Port        string
-	Auth        smtp.Auth
+	username    string
+	password    string
+	host        string
+	port        string
+	auth        smtp.Auth
+	runmode     bool
 }
 
-func NewSmtpMailServiceProvider(username, password, host, port string) *SmtpMailServiceProvider {
+func NewSmtpMailServiceProvider(username, password, host, port string, runmode bool) *SmtpMailServiceProvider {
 	auth := smtp.PlainAuth(
 		"",
 		username,
 		password,
 		host,
 	)
-	return &SmtpMailServiceProvider{username, password, host, port, auth}
+	return &SmtpMailServiceProvider{username, password, host, port, auth, runmode}
 }
 
-func (this *SmtpMailServiceProvider) Send(userName, address, message string) {
-	from := mail.Address{"iForget", this.Username}
+func (this *SmtpMailServiceProvider) Send(userName, address, message string) error {
+	from := mail.Address{"iForget", this.username}
 	to := mail.Address{userName, address}
 	body := message
 	subject := "Напоминание"
+
+	//если не "боевой" режим, то дальше ничего не делаем
+	if !this.runmode {
+		return nil
+	}
 
 	header := make(map[string]string)
 	header["From"] = from.String()
@@ -48,7 +54,7 @@ func (this *SmtpMailServiceProvider) Send(userName, address, message string) {
 	}
 	fullMessage += "\r\n" + base64.StdEncoding.EncodeToString([]byte(body))
 
-	smtpServer := this.Host + ":" + this.Port
+	smtpServer := this.host + ":" + this.port
 
 	connection, error := smtp.Dial(smtpServer)
 	if error != nil {
@@ -64,7 +70,7 @@ func (this *SmtpMailServiceProvider) Send(userName, address, message string) {
 		return error
 	}
 
-	if error = connection.Auth(this.Auth); error != nil {
+	if error = connection.Auth(this.auth); error != nil {
 		return error
 	}
 
