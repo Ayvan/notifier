@@ -28,7 +28,7 @@ func startService() {
 	go c.NoticeWorker(noticeChan, messageChan)
 	//запусукаем воркер сообщений: он получает сообщение и ID получателя (юзера)
 	//запрашивает у User список каналов и отправляет диспетчеру каналов сообщение и идентификатор канала
-	go c.MessageWorker(messageChan, channelMessageChan)
+	go c.MessageWorker(messageChan, channelMessageChan, redis)
 	//запусаем диспетчер каналов
 	//создает chan для каждого канала и воркеры для обработки этих chan
 	go c.ChannelDispatcher(channelMessageChan)

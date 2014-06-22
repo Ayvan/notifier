@@ -77,7 +77,7 @@ func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, mess
 	из User получает список каналов
 	и отправляет сообщения	в соответствующие каналы, передавая адрес получателя (телефон, email и т.д.)
  */
-func (this *ServiceController) MessageWorker(messageChan chan *models.Message, channelMessageChan chan *models.ChannelMessage) {
+func (this *ServiceController) MessageWorker(messageChan chan *models.Message, channelMessageChan chan *models.ChannelMessage, redis *services.Redis) {
 	for {
 		select {
 		case message := <-messageChan:
@@ -88,11 +88,11 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
 			var channels = []string{"Phone", "Mail"}
 
 			//Получатель
-			receiver := message.Receiver
+			addresses := models.FindUserAddresses(message.Receiver.Id, redis)
 
 		for _, channel := range channels {
 			//Формируем сообщение для оправки в воркер каналов
-			channelMessage := models.NewChannelMessage("1", channel, message.Message, receiver.Phone)
+			channelMessage := models.NewChannelMessage("1", channel, message.Message, addresses.Phone)
 			channelMessageChan <- channelMessage
 			fmt.Println("MessageWorker: ", "Отправлено в очередь", channelMessage)
 		}
