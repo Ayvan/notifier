@@ -1,12 +1,12 @@
 package main
 
 import (
+	"crypto/rand"
 	"fmt"
-	"os"
-	"strconv"
 	"github.com/astaxie/beego"
 	"github.com/garyburd/redigo/redis"
-	"crypto/rand"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -14,7 +14,7 @@ import m "math/rand"
 
 func main() {
 
-	firstNames := [50]string { "Marceline","Shawnee", "Ned", "Yesenia", "Danika", "Randa", "Fernande", "Lenora", "Beatris", "Clifford", "Lynelle", "Shizuko", "Robbyn", "Genny", "Monroe", "Kattie", "Liz", "Dimple", "Merlin", "Vincenzo", "Joann", "Ciera", "Lakia", "Yon", "Drucilla", "Tandra", "Abby", "Lynne", "Edythe", "Debbie", "Karen", "Raven", "Merna", "Chi", "Tammy", "Altha", "Malika", "Nichole", "Jeannetta", "Joy", "Arletta", "Ying", "Blanch", "Jerlene", "Marvel", "Lizabeth", "Ambrose", "Tammie", "Trenton", "Renae" }
+	firstNames := [50]string{"Marceline", "Shawnee", "Ned", "Yesenia", "Danika", "Randa", "Fernande", "Lenora", "Beatris", "Clifford", "Lynelle", "Shizuko", "Robbyn", "Genny", "Monroe", "Kattie", "Liz", "Dimple", "Merlin", "Vincenzo", "Joann", "Ciera", "Lakia", "Yon", "Drucilla", "Tandra", "Abby", "Lynne", "Edythe", "Debbie", "Karen", "Raven", "Merna", "Chi", "Tammy", "Altha", "Malika", "Nichole", "Jeannetta", "Joy", "Arletta", "Ying", "Blanch", "Jerlene", "Marvel", "Lizabeth", "Ambrose", "Tammie", "Trenton", "Renae"}
 	connection, _ := redis.Dial("tcp", beego.AppConfig.String("redisHost")+":"+beego.AppConfig.String("redisPort"))
 
 	fmt.Println("Generating data...")
@@ -25,11 +25,11 @@ func main() {
 	flush, _ := strconv.Atoi(args[1])
 
 	// очищаем базу
-	if (flush == 1) {
+	if flush == 1 {
 		connection.Send("FLUSHDB")
 	}
 
-	for i := 0 ; i < count; i++ {
+	for i := 0; i < count; i++ {
 
 		// создаем NOTICE
 		notice := randString(20)
@@ -40,15 +40,15 @@ func main() {
 
 		connection.Send(
 			"HMSET",
-				"notice:"+notice,
+			"notice:"+notice,
 			"group",
-				"group:"+group,
+			"group:"+group,
 			"message",
 			"this is message",
 			"time",
 			timestamp,
 			"author",
-				"user:"+user,
+			"user:"+user,
 		)
 
 		connection.Send("ZADD", "notices", timestamp, "notice:"+notice)
@@ -56,24 +56,24 @@ func main() {
 		// создаем GROUP
 		connection.Send(
 			"HMSET",
-				"group:"+group,
+			"group:"+group,
 			"owner",
-				"user:"+user,
+			"user:"+user,
 			"name",
-				"group "+strconv.Itoa(i+1),
+			"group "+strconv.Itoa(i+1),
 		)
 
 		// добавляем пользователя в созданную группу
 		connection.Send(
 			"SADD",
-					"group:"+group+":members",
-				"user:"+user,
+			"group:"+group+":members",
+			"user:"+user,
 		)
 
 		// создаем пользователя
 		connection.Send(
 			"HMSET",
-				"user:"+user,
+			"user:"+user,
 			"name",
 			userFirstName,
 		)

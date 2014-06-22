@@ -6,9 +6,9 @@ import (
 )
 
 type Notice struct {
-	Id       string
-	Group    string
-	Message  string
+	Id      string
+	Group   string
+	Message string
 
 	Datetime time.Time
 	Author   string
@@ -18,7 +18,7 @@ type Notice struct {
 
 func NewNotice(id string, group string, message string, datetime time.Time, author string) *Notice {
 
-	return &Notice{id , group , message , datetime , author }
+	return &Notice{id, group, message, datetime, author}
 }
 
 func NewNoticesFromRedis(redis services.Redis) []*Notice {
@@ -30,7 +30,7 @@ func NewNoticesFromRedis(redis services.Redis) []*Notice {
 
 		val := redis.Get(noticeKey)
 
-		if (len(val) >= 8) {
+		if len(val) >= 8 {
 
 			group := val[1]
 			message := val[3]
@@ -41,5 +41,5 @@ func NewNoticesFromRedis(redis services.Redis) []*Notice {
 		}
 	}
 
-	return notices;
+	return notices
 }

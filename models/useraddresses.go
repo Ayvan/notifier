@@ -13,7 +13,6 @@ func NewUserAddresses(channel string, address string) *UserAddresses {
 	return &UserAddresses{channel, address}
 }
 
-
 func FindUserAddresses(uuid string, redis services.Redis) []*UserAddresses {
 
 	result := redis.Get(uuid + ":addresses")
@@ -22,7 +21,7 @@ func FindUserAddresses(uuid string, redis services.Redis) []*UserAddresses {
 	j := 0
 	for i := 0; i < len(result); i++ {
 		key := i
-		i = i+1
+		i = i + 1
 		value := i
 
 		channel := result[key]

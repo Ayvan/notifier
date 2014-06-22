@@ -2,20 +2,20 @@ package services
 
 import (
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"net/mail"
 	"net/smtp"
-	"encoding/base64"
 )
 
 type SmtpMailServiceProvider struct {
-	username    string
-	password    string
-	host        string
-	port        string
-	auth        smtp.Auth
-	runmode     bool
+	username string
+	password string
+	host     string
+	port     string
+	auth     smtp.Auth
+	runmode  bool
 }
 
 func NewSmtpMailServiceProvider(username, password, host, port string, runmode bool) *SmtpMailServiceProvider {

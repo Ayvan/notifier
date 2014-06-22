@@ -5,14 +5,13 @@ import (
 )
 
 type User struct {
-	Id        string
-	Name      string
+	Id   string
+	Name string
 }
 
 func NewUser(id string, name string) *User {
-	return &User{id , name}
+	return &User{id, name}
 }
-
 
 func FindUser(id string, redis services.Redis) *User {
 

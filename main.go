@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"os/signal"
-	_ "iforgetgo/routers"
 	"github.com/astaxie/beego"
 	"iforgetgo/controllers"
 	"iforgetgo/models"
+	_ "iforgetgo/routers"
 	"iforgetgo/services"
+	"os"
+	"os/signal"
 )
 
 func startService() {
@@ -19,29 +19,32 @@ func startService() {
 
 	/******************************************Создание каналов*******************************************************/
 	/**
-		Поступает информация о текущей нотификации
-		Поля - группа, автор, текст сообщения
-	 */
+	Поступает информация о текущей нотификации
+	Поля - группа, автор, текст сообщения
+	*/
 	noticeChan := make(chan *models.Notice, 100)
 
 	/**
-		Поступает инфомация о нотификации для ее удаления
-	 */
+	Поступает инфомация о нотификации для ее удаления
+	*/
 	noticeCleanChan := make(chan *models.Notice, 100)
 
 	/**
-		Поступает информация о сообщении для конкретного пользователя
-		Поля - получатель, отправитель, сообщение
-	 */
+	Поступает информация о сообщении для конкретного пользователя
+	Поля - получатель, отправитель, сообщение
+	*/
 	messageChan := make(chan *models.Message, 100)
 
 	/**
-		Поступает информация для отправки сообщения в конкретный канал
-		Поля - получатель, сообщение, название канала, имя получателя
-	 */
+	Поступает информация для отправки сообщения в конкретный канал
+	Поля - получатель, сообщение, название канала, имя получателя
+	*/
 	channelMessageChan := make(chan *models.ChannelMessage, 100)
 
-	// Подключаемся к redis
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, os.Kill)
+
+	// подключаемся к redis
 	redis := services.NewRedis(beego.AppConfig.String("redisHost"), beego.AppConfig.String("redisPort"))
 
 	/******************************************Создание процессов******************************************************/
@@ -72,4 +75,3 @@ func main() {
 	startService()
 	beego.Run()
 }
-

@@ -15,7 +15,7 @@ type Group struct {
 }
 
 func NewGroup(id string, name string, owner string, members []string) *Group {
-	return &Group{id , name , owner , members }
+	return &Group{id, name, owner, members}
 }
 
 func FindGroup(id string, redis services.Redis) *Group {
@@ -31,4 +31,3 @@ func FindGroup(id string, redis services.Redis) *Group {
 
 	return nil
 }
-

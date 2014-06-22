@@ -1,9 +1,9 @@
 package services
 
 import (
+	"fmt"
 	"github.com/garyburd/redigo/redis"
 	"log"
-	"fmt"
 )
 
 type Redis struct {
@@ -13,13 +13,13 @@ type Redis struct {
 }
 
 func NewRedis(host string, port string) Redis {
-	return Redis{host , port , nil}
+	return Redis{host, port, nil}
 }
 
 func (this *Redis) Connect() {
 	connection, error := redis.Dial("tcp", this.Host+":"+this.Port)
 
-	if (error != nil) {
+	if error != nil {
 		log.Fatal(error)
 	}
 
@@ -44,52 +44,49 @@ func (this *Redis) Get(key string) []string {
 
 	result, error := this.connection.Do("HGETALL", key)
 
-	if (error != nil) {
+	if error != nil {
 		fmt.Println(error)
 		log.Fatal(error)
 	}
 
 	value, error := redis.Strings(result, error)
 
-	if (error != nil) {
+	if error != nil {
 		fmt.Println(error)
 		log.Fatal(error)
 	}
 
-	return value;
+	return value
 }
-
 
 func (this *Redis) GetMembers(key string) []string {
 
 	result, error := this.connection.Do("SMEMBERS", key)
 
-	if (error != nil) {
+	if error != nil {
 		fmt.Println(error)
 		log.Fatal(error)
 	}
 
 	value, error := redis.Strings(result, error)
 
-	if (error != nil) {
+	if error != nil {
 		fmt.Println(error)
 		log.Fatal(error)
 	}
 
-	return value;
+	return value
 }
-
 
 func (this *Redis) GetRangeByScore(name string, min int, max int) []string {
 
 	result, error := this.connection.Do("ZRANGEBYSCORE", name, min, max)
 
-	if (error != nil) {
+	if error != nil {
 		log.Fatal(error)
 	}
 
 	results, error := redis.Strings(result, error)
-
 
 	return results
 }
@@ -98,13 +95,13 @@ func (this *Redis) SearchKeys(query string) []string {
 
 	result, error := this.connection.Do("KEYS", query)
 
-	if (error != nil) {
+	if error != nil {
 		log.Fatal(error)
 	}
 
 	results, error := redis.Strings(result, error)
 
-	if (error != nil) {
+	if error != nil {
 		log.Fatal(error)
 	}
 

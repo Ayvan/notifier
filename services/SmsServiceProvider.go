@@ -1,23 +1,22 @@
 package services
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
-	"errors"
 )
 
 type SmsServiceProvider struct {
-	host       string
-	user       string
-	pass       string
-	from       string
-	runmode    bool
-
+	host    string
+	user    string
+	pass    string
+	from    string
+	runmode bool
 }
 
 func NewSmsServiceProvider(host string, user string, pass string, from string, runmode bool) *SmsServiceProvider {
 
-	return &SmsServiceProvider{host , user , pass, from, runmode}
+	return &SmsServiceProvider{host, user, pass, from, runmode}
 }
 
 func (this *SmsServiceProvider) Send(userName, address, message string) error {
