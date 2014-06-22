@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/mail"
 	"net/smtp"
-	"log"
 	"encoding/base64"
 )
 
@@ -19,19 +18,16 @@ type SmtpMailServiceProvider struct {
 }
 
 func NewSmtpMailServiceProvider(username, password, host, port string) *SmtpMailServiceProvider {
-	return &SmtpMailServiceProvider{username, password, host, port, nil}
-}
-
-func (this *SmtpMailServiceProvider) Authenticate() {
-	this.Auth = smtp.PlainAuth(
+	auth := smtp.PlainAuth(
 		"",
-		this.Username,
-		this.Password,
-		this.Host,
+		username,
+		password,
+		host,
 	)
+	return &SmtpMailServiceProvider{username, password, host, port, auth}
 }
 
-func (this *SmtpMailServiceProvider) Send(userName, userEmail, message string) {
+func (this *SmtpMailServiceProvider) Send(userName, userEmail, message string) error {
 	from := mail.Address{"iForget", this.Username}
 	to := mail.Address{userName, userEmail}
 	body := message
@@ -56,7 +52,7 @@ func (this *SmtpMailServiceProvider) Send(userName, userEmail, message string) {
 
 	connection, error := smtp.Dial(smtpServer)
 	if error != nil {
-		log.Panic(error)
+		return error
 	}
 
 	host, _, _ := net.SplitHostPort(smtpServer)
@@ -65,35 +61,37 @@ func (this *SmtpMailServiceProvider) Send(userName, userEmail, message string) {
 		ServerName:         host,
 	}
 	if error = connection.StartTLS(tlc); error != nil {
-		log.Panic(error)
+		return error
 	}
 
 	if error = connection.Auth(this.Auth); error != nil {
-		log.Panic(error)
+		return error
 	}
 
 	if error = connection.Mail(from.Address); error != nil {
-		log.Panic(error)
+		return error
 	}
 
 	if error = connection.Rcpt(to.Address); error != nil {
-		log.Panic(error)
+		return error
 	}
 
 	dataCloser, error := connection.Data()
 	if error != nil {
-		log.Panic(error)
+		return error
 	}
 
 	_, error = dataCloser.Write([]byte(fullMessage))
 	if error != nil {
-		log.Panic(error)
+		return error
 	}
 
 	error = dataCloser.Close()
 	if error != nil {
-		log.Panic(error)
+		return error
 	}
 
 	connection.Quit()
+
+	return nil
 }
