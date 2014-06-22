@@ -67,8 +67,6 @@ func (this *Redis) GetMembers(key string) []string {
 
 	value, error := redis.Strings(result, error)
 
-	fmt.Println(value)
-
 	if (error != nil) {
 		fmt.Println(error)
 		log.Fatal(error)

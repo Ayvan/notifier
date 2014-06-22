@@ -3,7 +3,6 @@ package models
 import "time"
 import (
 	"iforgetgo/services"
-	"fmt"
 )
 
 type Notice struct {
@@ -30,9 +29,6 @@ func NewNoticesFromRedis(redis services.Redis) []*Notice {
 	for i, noticeKey :=range results {
 
 		val := redis.Get(noticeKey)
-
-		fmt.Println(val)
-
 		group := val[1]
 		message := val[3]
 //		time := val[5]
