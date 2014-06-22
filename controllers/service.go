@@ -55,19 +55,20 @@ func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, re
 /**
 	Обработчик уведомлений: получает уведомление, из Group получает список пользователей и отправляет им сообщения
  */
-func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, messageChan chan *models.Message) {
+func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, messageChan chan *models.Message, redis *services.Redis) {
 	for {
 		notice := <-noticeChan // читаем notice
 		fmt.Println("Notice worker ok!", notice)
 
+
 		// получаем группу из нотиса
-		group := models.FindGroup(notice.Group)
-		fmt.Println("group: ", group)
+		group := models.FindGroup(notice.Group, redis)
+		fmt.Println("NoticeWorker group: ", group)
 		//получаем список пользователей группы
-		members := group.FindMembers()
-		fmt.Println("members: ", members)
+
+		fmt.Println("NoticeWorker members: ", group.Members)
 		// отправляем в MessageWorker все сообщения
-		for _, member := range members {
+		for _, member := range group.Members {
 			message := models.NewMessage(notice.Id, notice.Author, member, notice.Message)
 			messageChan <- message
 		}
@@ -125,7 +126,7 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 		//берем каждый канал, создаем для него chan и запускаем горутину
 		chansForChannels[i] = make(chan *models.ChannelMessage)
 		go this.ChannelMessageWorker(channel, chansForChannels[i])
-		fmt.Println("ChannelDispatcher: ", "Создан воркер для канала ",channel.GetName())
+		fmt.Println("ChannelDispatcher: ", "Создан воркер для канала ", channel.GetName())
 	}
 
 	//запускаем роутер, их может быть много
@@ -143,12 +144,12 @@ func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.Cha
 	for {
 		//возьмем из очереди сообщение
 		channelMessage := <-channelMessageChan
-		fmt.Println("ChannelRouter: ","Получено сообщение", channelMessage)
+		fmt.Println("ChannelRouter: ", "Получено сообщение", channelMessage)
 		//переберем все каналы
 		for i, channel := range channels {
 			//если канал соответствует каналу в сообщении, то отправим
 			if channel.GetName() == channelMessage.Channel {
-				fmt.Println("ChannelRouter: ","Сообщение отправлено в канал", channelMessage.Channel)
+				fmt.Println("ChannelRouter: ", "Сообщение отправлено в канал", channelMessage.Channel)
 				chansForChannels[i] <- channelMessage
 			}
 		}
@@ -162,7 +163,7 @@ func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.Cha
 func (this *ServiceController) ChannelMessageWorker(channel models.Channel, channelMessageChan chan *models.ChannelMessage) {
 	for {
 		channelMessage := <-channelMessageChan
-		fmt.Println("ChannelMessageWorker: ","Сообщение отправлено в канал", channelMessage)
+		fmt.Println("ChannelMessageWorker: ", "Сообщение отправлено в канал", channelMessage)
 		channel.Send(channelMessage)
 	}
 }

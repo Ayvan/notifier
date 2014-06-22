@@ -55,6 +55,29 @@ func (this *Redis) Get(key string) []string {
 	return value;
 }
 
+
+func (this *Redis) GetMembers(key string) []string {
+
+	result, error := this.connection.Do("SMEMBERS", key)
+
+	if (error != nil) {
+		fmt.Println(error)
+		log.Fatal(error)
+	}
+
+	value, error := redis.Strings(result, error)
+
+	fmt.Println(value)
+
+	if (error != nil) {
+		fmt.Println(error)
+		log.Fatal(error)
+	}
+
+	return value;
+}
+
+
 func (this *Redis) GetRangeByScore(name string, min int, max int) []string {
 
 	result, error := this.connection.Do("ZRANGEBYSCORE", name, min, max)

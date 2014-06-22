@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+//	"iforgetgo/services"
 )
 
 type SmsChannel struct {
@@ -16,6 +17,8 @@ func NewSmsChannel() *SmsChannel {
 
 func (this *SmsChannel) Send(message *ChannelMessage) {
 	msg := this.prepareMessage(message.Message)
+	//smsProvider := NewSmsServiceProvider()
+
 	fmt.Println("SmsChannel.Send: ","Отправляем SMS с текстом '",msg,"'")
 }
 

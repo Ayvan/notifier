@@ -1,6 +1,9 @@
 package models
 
-type Channel interface {
+type ChannelProvider interface {
 	Send(message *ChannelMessage)
+}
+type Channel interface {
+	ChannelProvider
 	GetName() string
 }
