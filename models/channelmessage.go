@@ -5,11 +5,12 @@ type ChannelMessage struct {
 	Channel string
 	Message string
 	Address string
+	UserName string
 	//Channel *Channel
 	//Message *Message
 
 }
 
-func NewChannelMessage(id string, channel string, message string, address string) *ChannelMessage{
-	return &ChannelMessage{id, channel, message, address}
+func NewChannelMessage(id string, channel string, message string, address string, username string) *ChannelMessage{
+	return &ChannelMessage{id, channel, message, address, username}
 }

@@ -95,14 +95,14 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
 			var channels = []string{"Phone", "Mail"}
 
 			//Получатель
-			addresses := models.FindUserAddresses(message.Receiver.Id, redis)
+			receiver := message.Receiver
 
-		for _, channel := range channels {
-			//Формируем сообщение для оправки в воркер каналов
-			channelMessage := models.NewChannelMessage("1", channel, message.Message, receiver.Phone)
-			channelMessageChan <- channelMessage
-			fmt.Println("MessageWorker: ", "Отправлено в очередь", channelMessage)
-		}
+		    for _, channel := range channels {
+			    //Формируем сообщение для оправки в воркер каналов
+			    channelMessage := models.NewChannelMessage("1", channel, message.Message, receiver.Phone, receiver.Name)
+			    channelMessageChan <- channelMessage
+			    fmt.Println("MessageWorker: ", "Отправлено в очередь", channelMessage)
+		    }
 
 			fmt.Println("MessageWorker: ", "Message worker ok!", receiver)
 		}
