@@ -12,8 +12,8 @@ type Redis struct {
 	connection redis.Conn
 }
 
-func NewRedis(host string, port string) *Redis {
-	return &Redis{host , port , nil}
+func NewRedis(host string, port string) Redis {
+	return Redis{host , port , nil}
 }
 
 func (this *Redis) Connect() {
@@ -46,8 +46,6 @@ func (this *Redis) Get(key string) []string {
 	}
 
 	value, error := redis.Strings(result, error)
-
-	fmt.Println(value)
 
 	if (error != nil) {
 		fmt.Println(error)

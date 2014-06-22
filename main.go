@@ -18,7 +18,6 @@ func startService() {
 
 	// подключаемся к redis
 	redis := services.NewRedis(beego.AppConfig.String("redisHost"), beego.AppConfig.String("redisPort"))
-	redis.Connect()
 
 	//запускаем процесс, читающий БД
 	go c.DbReader(noticeChan, noticeCleanChan, redis)
