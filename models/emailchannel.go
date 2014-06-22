@@ -9,15 +9,23 @@ type EmailChannel struct {
 	Params []string
 }
 
-func NewChannelEmail() EmailChannel {
+func NewEmailChannel() *EmailChannel {
 	params := []string{"124"}
-	return EmailChannel{"Mail",params}
+	return &EmailChannel{"Mail",params}
 }
 
-func (this EmailChannel) Send(message *ChannelMessage) {
-	fmt.Println("EmailChannel.Send: ","Отправляем сообщение с текстом '",message.Message,"'")
+func (this *EmailChannel) Send(message *ChannelMessage) {
+	msg := this.prepareMessage(message.Message)
+	fmt.Println("EmailChannel.Send: ","Отправляем сообщение с текстом '",msg,"'")
 }
 
-func (this EmailChannel) GetName() string {
+func (this *EmailChannel) GetName() string {
 	return this.Name
+}
+
+/**
+	подготовка сообщения к отправке, например рендер темплейта
+ */
+func (this *EmailChannel) prepareMessage(message string) string {
+	return message
 }

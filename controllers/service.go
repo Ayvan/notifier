@@ -120,7 +120,7 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 	chansForChannels := make([]chan *models.ChannelMessage, len(channels))
 
 	for i, channel := range channels {
-		//берем каждый канал, содаем для него
+		//берем каждый канал, создаем для него chan и запускаем горутину
 		chansForChannels[i] = make(chan *models.ChannelMessage)
 		go this.ChannelMessageWorker(channel, chansForChannels[i])
 		fmt.Println("ChannelDispatcher: ", "Создан воркер для канала ",channel.GetName())
