@@ -49,12 +49,29 @@ func main() {
 
 		connection.Send("ZADD", "notices", timestamp, "notice:"+notice)
 
+		// создаем GROUP
+		connection.Send(
+			"HMSET",
+				"groups:"+group,
+			"owner",
+				"user:"+user,
+			"name",
+				"group "+strconv.Itoa(i+1),
+		)
+
+		// добавляем пользователя в созданную группу
+		connection.Send(
+			"SADD",
+					"groups:"+group+":members",
+				"user:"+user,
+		)
+
 
 	}
 
 	connection.Flush()
 
-	fmt.Println("Generated reconds:", count)
+	fmt.Println("Generated records:", count)
 
 }
 
