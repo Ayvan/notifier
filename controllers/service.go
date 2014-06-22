@@ -46,7 +46,6 @@ func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCl
 func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, redis services.Redis) {
 	redis.Connect()
 	for {
-		//		<-noticeCleanChan
 		notice := <-noticeCleanChan
 		redis.Delete(notice.Id)
 		redis.DeleteFromRange("notices", notice.Id)
@@ -59,11 +58,11 @@ func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, re
 /**
 	Обработчик уведомлений: получает уведомление, из Group получает список пользователей и отправляет им сообщения
  */
-func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, messageChan chan *models.Message, redis *services.Redis) {
+func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, messageChan chan *models.Message, redis services.Redis) {
+	redis.Connect()
 	for {
 		notice := <-noticeChan // читаем notice
 		fmt.Println("Notice worker ok!", notice)
-
 
 		// получаем группу из нотиса
 		group := models.FindGroup(notice.Group, redis)
@@ -92,18 +91,15 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
 
 			fmt.Println("MessageWorker: ", "Принял", message)
 
-			//Каналы - в дальнейшем будут выбираться из базы настроек пользователя
-			var channels = []string{"Phone", "Mail"}
+			//Каналы и адреса
+			addresses := models.FindUserAddresses(message.Receiver, redis)
 
-			//Получатель
-			receiver := message.Receiver
-
-		    for _, channel := range channels {
-			    //Формируем сообщение для оправки в воркер каналов
-			    channelMessage := models.NewChannelMessage("1", channel, message.Message, receiver.Phone, receiver.Name)
-			    channelMessageChan <- channelMessage
-			    fmt.Println("MessageWorker: ", "Отправлено в очередь", channelMessage)
-		    }
+		for _, address := range addresses {
+			//Формируем сообщение для оправки в воркер каналов
+			channelMessage := models.NewChannelMessage("1", address.Channel, message.Message, address.Address)
+			channelMessageChan <- channelMessage
+			fmt.Println("MessageWorker: ", "Отправлено в очередь", channelMessage)
+		}
 
 			fmt.Println("MessageWorker: ", "Message worker ok!", receiver)
 		}

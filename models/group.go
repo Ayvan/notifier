@@ -18,7 +18,7 @@ func NewGroup(id string, name string, owner string, members []string) *Group {
 	return &Group{id , name , owner , members }
 }
 
-func FindGroup(id string, redis *services.Redis) *Group {
+func FindGroup(id string, redis services.Redis) *Group {
 	fmt.Println("FindGroup:", id)
 	val := redis.Get(id)
 	members := redis.GetMembers(id + ":members")
