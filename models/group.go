@@ -24,6 +24,11 @@ func FindGroup(id string, redis services.Redis) *Group {
 	defer redis.Disconnect()
 	val := redis.Get(id)
 	members := redis.GetMembers(id + ":members")
-	return NewGroup(val[0], val[1], val[2], members)
+
+	if len(val) >= 3 {
+		return NewGroup(val[0], val[1], val[2], members)
+	}
+
+	return nil
 }
 

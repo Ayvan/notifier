@@ -17,8 +17,9 @@ func NewUser(id string, name string) *User {
 func FindUser(id string, redis services.Redis) *User {
 
 	result := redis.Get(id)
-
-	userName := result[1]
-
-	return NewUser(id, userName)
+	if len(result) >= 2 {
+		userName := result[1]
+		return NewUser(id, userName)
+	}
+	return nil
 }

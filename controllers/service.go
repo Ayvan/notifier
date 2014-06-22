@@ -101,8 +101,12 @@ func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, mess
 
 		// получаем группу из нотиса
 		group := models.FindGroup(notice.Group, redis)
-		fmt.Println("NoticeWorker: ", "Найдена группа ", group.Id)
 
+		if group == nil {
+			continue
+		}
+
+		fmt.Println("NoticeWorker group: ", group)
 		//получаем список пользователей группы
 		fmt.Println("NoticeWorker: ", "В группе найдено ", len(group.Members), " получателей")
 
@@ -149,14 +153,17 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
 			addresses := models.FindUserAddresses(message.Receiver, redis)
 			fmt.Println("MessageWorker: ", "Найдено ", len(addresses), " каналов")
 
-		for _, address := range addresses {
-			//Формируем сообщение для оправки в воркер каналов
-			channelMessage := models.NewChannelMessage("1", address.Channel, message.Message, address.Address, receiver.Name)
-			channelMessageChan <- channelMessage
-			fmt.Println("MessageWorker: ", "Отправлено в очередь обработки каналов получения, канал "+address.Channel)
-		}
+			if receiver == nil {
+				continue
+			}
+			for _, address := range addresses {
+				//Формируем сообщение для оправки в воркер каналов
+				channelMessage := models.NewChannelMessage("1", address.Channel, message.Message, address.Address, receiver.Name)
+				channelMessageChan <- channelMessage
+				fmt.Println("MessageWorker: ", "Отправлено в очередь", channelMessage)
+			}
 
-			fmt.Println("MessageWorker: ", "Закончил обработку сообщения")
+			fmt.Println("MessageWorker: ", "Message worker ok!", receiver)
 		}
 
 		/**
