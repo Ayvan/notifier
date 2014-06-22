@@ -36,5 +36,8 @@ func (this *SmsChannel) GetName() string {
 	подготовка сообщения к отправке, например рендер темплейта
  */
 func (this *SmsChannel) prepareMessage(message string) string {
+	if len(message) > 70 {
+		return message[:70]
+	}
 	return message
 }
