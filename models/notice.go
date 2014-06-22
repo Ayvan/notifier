@@ -30,8 +30,6 @@ func NewNoticesFromRedis(redis services.Redis) []*Notice {
 
 		val := redis.Get(noticeKey)
 
-		fmt.Println(val)
-
 		if (len(val) >= 8) {
 
 			group := val[1]

@@ -16,29 +16,49 @@ func startService() {
 	c := controllers.ServiceController{}
 	c.InitService()
 	// for i:=0;i<N;i++ { запуск нескольких горутин воркеров
+
+	/******************************************Создание каналов*******************************************************/
+	/**
+		Поступает информация о текущей нотификации
+		Поля - группа, автор, текст сообщения
+	 */
 	noticeChan := make(chan *models.Notice, 100)
+
+	/**
+		Поступает инфомация о нотификации для ее удаления
+	 */
 	noticeCleanChan := make(chan *models.Notice, 100)
+
+	/**
+		Поступает информация о сообщении для конкретного пользователя
+		Поля - получатель, отправитель, сообщение
+	 */
 	messageChan := make(chan *models.Message, 100)
+
+	/**
+		Поступает информация для отправки сообщения в конкретный канал
+		Поля - получатель, сообщение, название канала, имя получателя
+	 */
 	channelMessageChan := make(chan *models.ChannelMessage, 100)
 
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, os.Kill)
-
-	// подключаемся к redis
+	// Подключаемся к redis
 	redis := services.NewRedis(beego.AppConfig.String("redisHost"), beego.AppConfig.String("redisPort"))
+
+	/******************************************Создание процессов******************************************************/
 
 	//запускаем процесс, читающий БД
 	go c.DbReader(noticeChan, noticeCleanChan, redis)
+
 	//запускаем процесс, удаляющий из БД обработанные записи
-	//go c.DbCleaner(noticeCleanChan, redis)
-	//запускаем воркер уведомлений: он обрабатывает уведомление и решает кому его отправить
+	go c.DbCleaner(noticeCleanChan, redis)
+
+	//запускаем воркер нотификаций - выбирает получателей из группы для отправки им сообщений
 	go c.NoticeWorker(noticeChan, messageChan, redis)
-	//запусукаем воркер сообщений: он получает сообщение и ID получателя (юзера)
-	//запрашивает у User список каналов и отправляет диспетчеру каналов сообщение и идентификатор канала
+
+	//запусукаем воркер сообщений - выбирает каналы пользователя, в которые отправлять сообщение
 	go c.MessageWorker(messageChan, channelMessageChan, redis)
-	//запусаем диспетчер каналов
-	//создает chan для каждого канала и воркеры для обработки этих chan
+
+	//запусаем диспетчер каналов - создает chan для каждого канала и воркеры для обработки этих chan
 	go c.ChannelDispatcher(channelMessageChan)
 
 	// останов сервера по Ctrl-C
@@ -49,7 +69,7 @@ func startService() {
 }
 
 func main() {
-	startService() //
-	//beego.Run()
+	startService()
+	beego.Run()
 }
 

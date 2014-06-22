@@ -26,7 +26,7 @@ func NewEmailChannel() *EmailChannel {
 func (this *EmailChannel) Send(message *ChannelMessage) {
 	msg := this.prepareMessage(message.Message)
 	this.provider.Send(message.UserName, message.Address, msg)
-	fmt.Println("EmailChannel.Send: ","Отправляем сообщение с текстом '",msg,"'")
+	fmt.Println("EmailChannel.Send: ","Отправляем сообщение с текстом \"",msg,"\"")
 }
 
 func (this *EmailChannel) GetName() string {

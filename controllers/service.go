@@ -24,16 +24,12 @@ func (this *ServiceController) InitService() {
 
 /**
 	Читатель БД, он запрашивает в БД уведомления, которые надо отправить в ближайшее время,
-	отправляет их дальше, а также решает, удаляем ли это сообщение из БД или нет, удаляемые отправляет в noticeCleanChan
+	отправляет их в канал обработки уведомлений и канал удаления
  */
 func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCleanChan chan *models.Notice, redis services.Redis) {
-	this.wg.Add(1)
+	fmt.Println("DbReader: ", "Запущен")
 	redis.Connect()
-	defer func() {
-		redis.Disconnect()
-		this.wg.Done()
-		fmt.Println("DbReader: STOPPED")
-	}()
+	//Чтение из БД каждые 2 секунды
 	ch := time.Tick(2 * time.Second)
 	for {
 		select {
@@ -44,19 +40,24 @@ func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCl
 
 		case <-ch:
 
+			//Получаем из базы все уведомления, которые нужно сейчас отправить
 			notices := models.NewNoticesFromRedis(redis)
 
-			for _, notice := range notices {
-				if (notice != nil) {
-					noticeChan <- notice
-					noticeCleanChan <- notice
+			fmt.Println("DbReader: ", "Найдено", len(notices), "уведомлений для обработки")
 
-					fmt.Println("Notice " + notice.Id + " pushed!")
-				}
+			//Обходим каждое уведомление и отправляем его в канал обработки и в канал удаления
+		for _, notice := range notices {
+			if (notice != nil) {
+				//Отправка в канал обработки уведомлений
+				noticeChan <- notice
+
+				//Отправка в канал удаления уведомлений
+				noticeCleanChan <- notice
+
+				fmt.Println("DbReader: ", "Уведомление ", notice.Id, " отправлено в обработку и удаление")
 			}
 
-			fmt.Println("DbReader finished")
-
+			fmt.Println("DbReader: ", "Обработка закончена")
 		}
 	}
 }
@@ -65,7 +66,7 @@ func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCl
 	"Чистильщик" БД, получает из chan уведомления и удаляет их
  */
 func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, redis services.Redis) {
-	this.wg.Add(1)
+	fmt.Println("DbCleaner: ", "Запущен")
 	redis.Connect()
 	defer func() {
 		redis.Disconnect()
@@ -74,25 +75,20 @@ func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, re
 	}()
 
 	for {
-		select {
-		case <-this.quitChan:
-		this.quitChan<-true
-			return
 
-		case notice := <-noticeCleanChan:
-			redis.Delete(notice.Id)
-			redis.DeleteFromRange("notices", notice.Id)
+		notice := <-noticeCleanChan
+		redis.Delete(notice.Id)
+		redis.DeleteFromRange("notices", notice.Id)
 
-			fmt.Printf("Clean ok! Notice id: %s\n", notice.Id)
-		}
+		fmt.Println("DbCleaner: ", "Уведомление ", notice.Id, " удалено")
 	}
 }
 
 /**
-	Обработчик уведомлений: получает уведомление, из Group получает список пользователей и отправляет им сообщения
+	Обработчик уведомлений: получает уведомление, из Group получает список пользователей и отправляет в обработчик сообщений
  */
 func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, messageChan chan *models.Message, redis services.Redis) {
-	this.wg.Add(1)
+	fmt.Println("NoticeWorker: ", "Запущен")
 	redis.Connect()
 	defer func() {
 		redis.Disconnect()
@@ -100,37 +96,35 @@ func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, mess
 		fmt.Println("NoticeWorker: STOPPED")
 	}()
 	for {
-		select {
-		case <-this.quitChan:
-		this.quitChan<-true
-			return
+		notice := <-noticeChan // читаем notice
+		fmt.Println("NoticeWorker: ", "Обработка уведомления ", notice.Id)
 
-		case notice := <-noticeChan:
-			// читаем notice
-			fmt.Println("Notice worker ok!", notice)
+		// получаем группу из нотиса
+		group := models.FindGroup(notice.Group, redis)
+		fmt.Println("NoticeWorker: ", "Найдена группа ", group.Id)
 
-			// получаем группу из нотиса
-			group := models.FindGroup(notice.Group, redis)
-			fmt.Println("NoticeWorker group: ", group)
-			//получаем список пользователей группы
+		//получаем список пользователей группы
+		fmt.Println("NoticeWorker: ", "В группе найдено ", len(group.Members), " получателей")
 
-			fmt.Println("NoticeWorker members: ", group.Members)
-			// отправляем в MessageWorker все сообщения
+		// отправляем в MessageWorker сообщения для каждого пользователя
 		for _, member := range group.Members {
 			message := models.NewMessage(notice.Id, notice.Author, member, notice.Message)
 			messageChan <- message
+
+			fmt.Println("NoticeWorker: ", "Сообщение для пользователя ", member, " отправлено")
 		}
-		}
+
+		fmt.Println("NoticeWorker: ", "Закончил обработку уведоления")
 	}
 }
 
 /**
-	Обработчик сообщений: получает сообщение и пользователей,
-	из User получает список каналов
-	и отправляет сообщения	в соответствующие каналы, передавая адрес получателя (телефон, email и т.д.)
+	Обработчик сообщений: получает сообщение и получателя,
+	Получает список каналов и адресов каналов для получателя
+	и отправляет сообщения в обработчик каналов, передавая адрес получателя, канал, имя получателя, текст сообщения
  */
-func (this *ServiceController) MessageWorker(messageChan chan *models.Message, channelMessageChan chan * models.ChannelMessage, redis services.Redis) {
-	this.wg.Add(1)
+func (this *ServiceController) MessageWorker(messageChan chan *models.Message, channelMessageChan chan *models.ChannelMessage, redis services.Redis) {
+	fmt.Println("MessageWorker: ", "Запущен")
 	redis.Connect()
 	defer func() {
 		redis.Disconnect()
@@ -145,22 +139,24 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
 
 		case message := <-messageChan:
 
-			fmt.Println("MessageWorker: ", "Принял", message)
-
-			//Каналы и адреса
-			addresses := models.FindUserAddresses(message.Receiver, redis)
+			fmt.Println("MessageWorker: ", "Принял сообщение")
 
 			//Получатель
 			receiver := models.FindUser(message.Receiver, redis)
+			fmt.Println("MessageWorker: ", "Найден получатель "+message.Receiver)
+
+			//Каналы и адреса
+			addresses := models.FindUserAddresses(message.Receiver, redis)
+			fmt.Println("MessageWorker: ", "Найдено ", len(addresses), " каналов")
 
 		for _, address := range addresses {
 			//Формируем сообщение для оправки в воркер каналов
 			channelMessage := models.NewChannelMessage("1", address.Channel, message.Message, address.Address, receiver.Name)
 			channelMessageChan <- channelMessage
-			fmt.Println("MessageWorker: ", "Отправлено в очередь", channelMessage)
+			fmt.Println("MessageWorker: ", "Отправлено в очередь обработки каналов получения, канал "+address.Channel)
 		}
 
-			fmt.Println("MessageWorker: ", "Message worker ok!", receiver)
+			fmt.Println("MessageWorker: ", "Закончил обработку сообщения")
 		}
 
 		/**
@@ -178,7 +174,7 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
  */
 func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models.ChannelMessage) {
 
-	fmt.Println("ChannelDispatcher: Запущен")
+	fmt.Println("ChannelDispatcher: ", "Запущен")
 
 	channels := models.GetChannels()
 	chansForChannels := make([]chan *models.ChannelMessage, len(channels))
@@ -190,7 +186,7 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 		fmt.Println("ChannelDispatcher: ", "Создан воркер для канала ", channel.GetName())
 	}
 
-	//запускаем роутер, их может быть много
+	//запускаем роутеры
 	go this.ChannelRouter(channelMessageChan, channels, chansForChannels)
 
 	/**
@@ -221,8 +217,8 @@ func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.Cha
 		for i, channel := range channels {
 			//если канал соответствует каналу в сообщении, то отправим
 			if channel.GetName() == channelMessage.Channel {
-				fmt.Println("ChannelRouter: ", "Сообщение отправлено в канал", channelMessage.Channel)
 				chansForChannels[i] <- channelMessage
+				fmt.Println("ChannelRouter: ", "Сообщение отправлено в канал", channelMessage.Channel)
 			}
 		}
 		}
@@ -241,15 +237,9 @@ func (this *ServiceController) ChannelMessageWorker(channel models.Channel, chan
 	}()
 
 	for {
-		select {
-		case <-this.quitChan:
-		this.quitChan<-true
-			return
-
-		case channelMessage := <-channelMessageChan:
-			fmt.Println("ChannelMessageWorker: ", "Сообщение отправлено в канал", channelMessage)
-			channel.Send(channelMessage)
-		}
+		channelMessage := <-channelMessageChan
+		channel.Send(channelMessage)
+		fmt.Println("ChannelMessageWorker: ", "Сообщение отправлено в канал", channelMessage)
 	}
 }
 

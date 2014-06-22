@@ -25,7 +25,7 @@ func NewSmsChannel() *SmsChannel {
 func (this *SmsChannel) Send(message *ChannelMessage) {
 	msg := this.prepareMessage(message.Message)
 	this.provider.Send(message.UserName, message.Address, msg)
-	fmt.Println("SmsChannel.Send: ", "Отправляем SMS с текстом '", msg, "'")
+	fmt.Println("SmsChannel.Send: ", "Отправляем SMS с текстом \"", msg, "\"")
 }
 
 func (this *SmsChannel) GetName() string {
