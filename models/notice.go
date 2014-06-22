@@ -24,18 +24,23 @@ func NewNotice(id string, group string, message string, datetime time.Time, auth
 func NewNoticesFromRedis(redis services.Redis) []*Notice {
 
 	results := redis.GetRangeByScore("notices", 0, 1703150062)
-    notices := make([]*Notice, len(results), len(results))
+	notices := make([]*Notice, len(results), len(results))
 
-	for i, noticeKey :=range results {
+	for i, noticeKey := range results {
 
 		val := redis.Get(noticeKey)
-		group := val[1]
-		message := val[3]
-//		time := val[5]
-		author := val[7]
 
-		notices[i] = NewNotice(noticeKey, group, message, time.Now(), author)
+		fmt.Println(val)
 
+		if (len(val) >= 8) {
+
+			group := val[1]
+			message := val[3]
+			//		time := val[5]
+			author := val[7]
+
+			notices[i] = NewNotice(noticeKey, group, message, time.Now(), author)
+		}
 	}
 
 	return notices;
