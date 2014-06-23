@@ -43,6 +43,9 @@ cd /home/USER/go/src
 git clone https://github.com/fintech-fab/iforgetgo.git
 
 
+**Config**
+cp /home/USER/go/src/iforgetgo/config/app.conf.sample /home/USER/go/src/iforgetgo/config/app.conf
+
 **Start:**
 
 cd /home/USER/go/src/iforgetgo
