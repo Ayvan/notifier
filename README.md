@@ -11,7 +11,8 @@ apt-get install golang-go
 mkdir /home/USER/go
 
 
-*Install Redis server*
+**Install Redis server**
+
 apt-get install redis-server
 
 
