@@ -2,11 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/astaxie/beego"
 	"iforgetgo/controllers"
-	"iforgetgo/models"
 	_ "iforgetgo/routers"
-	"iforgetgo/services"
 	"os"
 	"os/signal"
 )
@@ -17,52 +14,10 @@ func startService() {
 	c.InitService()
 	// for i:=0;i<N;i++ { запуск нескольких горутин воркеров
 
-	/******************************************Создание каналов*******************************************************/
-	/**
-	Поступает информация о текущей нотификации
-	Поля - группа, автор, текст сообщения
-	*/
-	noticeChan := make(chan *models.Notice, 100)
-
-	/**
-	Поступает инфомация о нотификации для ее удаления
-	*/
-	noticeCleanChan := make(chan *models.Notice, 100)
-
-	/**
-	Поступает информация о сообщении для конкретного пользователя
-	Поля - получатель, отправитель, сообщение
-	*/
-	messageChan := make(chan *models.Message, 100)
-
-	/**
-	Поступает информация для отправки сообщения в конкретный канал
-	Поля - получатель, сообщение, название канала, имя получателя
-	*/
-	channelMessageChan := make(chan *models.ChannelMessage, 100)
+	c.Run()
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, os.Kill)
-
-	// подключаемся к redis
-	redis := services.NewRedis(beego.AppConfig.String("redisHost"), beego.AppConfig.String("redisPort"))
-
-	/******************************************Создание процессов******************************************************/
-
-	//запускаем процесс, читающий БД
-	go c.DbReader(noticeChan, noticeCleanChan, redis)
-
-	//запускаем процесс, удаляющий из БД обработанные записи
-	go c.DbCleaner(noticeCleanChan, redis)
-
-	//запускаем воркер нотификаций - выбирает получателей из группы для отправки им сообщений
-	go c.NoticeWorker(noticeChan, messageChan, redis)
-
-	//запусукаем воркер сообщений - выбирает каналы пользователя, в которые отправлять сообщение
-	go c.MessageWorker(messageChan, channelMessageChan, redis)
-
-	//запусаем диспетчер каналов - создает chan для каждого канала и воркеры для обработки этих chan
-	go c.ChannelDispatcher(channelMessageChan)
 
 	// останов сервера по Ctrl-C
 	<-sigChan

@@ -8,6 +8,7 @@ import (
 type SmsChannel struct {
 	Name     string
 	provider services.ServiceProvider
+	i int64
 }
 
 func NewSmsChannel() *SmsChannel {
@@ -19,13 +20,15 @@ func NewSmsChannel() *SmsChannel {
 		beego.AppConfig.String("sms_gate_from"),
 		runmode)
 
-	return &SmsChannel{"Phone", provider}
+	return &SmsChannel{"Phone", provider, 0}
 }
 
 func (this *SmsChannel) Send(message *ChannelMessage) {
 	msg := this.prepareMessage(message.Message)
 	this.provider.Send(message.UserName, message.Address, msg)
-	fmt.Println("SmsChannel.Send: ", "Отправляем SMS с текстом \"", msg, "\"")
+	//fmt.Println("SmsChannel.Send: ", "Отправляем SMS с текстом \"", msg, "\"")
+	this.i++
+	fmt.Println("Отправлено sms: ",this.i)
 }
 
 func (this *SmsChannel) GetName() string {

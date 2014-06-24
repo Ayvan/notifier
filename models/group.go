@@ -1,7 +1,7 @@
 package models
 
 import (
-	"fmt"
+	//"fmt"
 	"iforgetgo/services"
 )
 
@@ -19,9 +19,7 @@ func NewGroup(id string, name string, owner string, members []string) *Group {
 }
 
 func FindGroup(id string, redis services.Redis) *Group {
-	fmt.Println("FindGroup: ", id)
-	redis.Connect()
-	defer redis.Disconnect()
+	//fmt.Println("FindGroup:", id)
 	val := redis.Get(id)
 	members := redis.GetMembers(id + ":members")
 

@@ -9,6 +9,7 @@ import (
 type EmailChannel struct {
 	Name     string
 	provider services.ServiceProvider
+	i int64
 }
 
 func NewEmailChannel() *EmailChannel {
@@ -19,13 +20,15 @@ func NewEmailChannel() *EmailChannel {
 		beego.AppConfig.String("gmailHost"),
 		beego.AppConfig.String("gmailPort"),
 		runmode)
-	return &EmailChannel{"Mail", provider}
+	return &EmailChannel{"Mail", provider, 0}
 }
 
 func (this *EmailChannel) Send(message *ChannelMessage) {
 	msg := this.prepareMessage(message.Message)
 	this.provider.Send(message.UserName, message.Address, msg)
-	fmt.Println("EmailChannel.Send: ", "Отправляем сообщение с текстом \"", msg, "\"")
+	//fmt.Println("EmailChannel.Send: ", "Отправляем сообщение с текстом \"", msg, "\"")
+	this.i++
+	fmt.Println("Отправлено email: ",this.i)
 }
 
 func (this *EmailChannel) GetName() string {
