@@ -11,16 +11,48 @@ import (
 
 type ServiceController struct {
 	wg       *sync.WaitGroup
-	quitChan chan bool
+	quitChanDbReader chan bool
+	finishedDbReader chan bool
+
+	quitChanDbCleaner chan bool
+	finishedDbCleaner chan bool
+
+	quitChanNoticeWorker chan bool
+	finishedNoticeWorker chan bool
+
+	quitChanMessageWorker chan bool
+	finishedMessageWorker chan bool
+
+	quitChanChannelDispatcher chan bool
+	finishedChannelDispatcher chan bool
+
+	quitChanChannelRouter chan bool
+	finishedChannelRouter chan bool
+
 	beego.Controller
 }
 
 func (this *ServiceController) InitService() {
 	this.wg = &sync.WaitGroup{}
-	this.quitChan = make(chan bool, 1)
+
+	//каналы для команд завершения
+	this.quitChanDbReader = make(chan bool, 1)
+	this.quitChanDbCleaner = make(chan bool, 1)
+	this.quitChanNoticeWorker = make(chan bool, 1)
+	this.quitChanMessageWorker = make(chan bool, 1)
+	this.quitChanChannelDispatcher = make(chan bool, 1)
+	this.quitChanChannelRouter = make(chan bool, 1)
+
+	//каналы для отчетов об успешном завершении
+	this.finishedDbReader = make(chan bool, 1)
+	this.finishedDbCleaner = make(chan bool, 1)
+	this.finishedNoticeWorker = make(chan bool, 1)
+	this.finishedMessageWorker = make(chan bool, 1)
+	this.finishedChannelDispatcher = make(chan bool, 1)
+	this.finishedChannelRouter = make(chan bool, 1)
 }
 
-func (this *ServiceController) Run(){
+func (this *ServiceController) Run() {
 	/******************************************Создание каналов*******************************************************/
 	/**
 	Поступает информация о текущей нотификации
@@ -74,6 +106,12 @@ func (this *ServiceController) Run(){
 func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCleanChan chan *models.Notice, redis services.Redis) {
 	fmt.Println("DbReader: ", "Запущен")
 	redis.Connect()
+	defer func() {
+		redis.Disconnect()
+		this.wg.Done()
+		fmt.Println("DbReader: STOPPED")
+		this.finishedDbReader <- true
+	}()
 	//Чтение из БД каждые 2 секунды
 	ch := time.Tick(2 * time.Second)
 	for {
@@ -87,22 +125,21 @@ func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCl
 			fmt.Println("DbReader: ", "Найдено", len(notices), "уведомлений для обработки")
 
 			//Обходим каждое уведомление и отправляем его в канал обработки и в канал удаления
-			for _, notice := range notices {
-				if notice != nil {
-					//Отправка в канал обработки уведомлений
-					noticeChan <- notice
+		for _, notice := range notices {
+			if notice != nil {
+				//Отправка в канал обработки уведомлений
+				noticeChan <- notice
 
-					//Отправка в канал удаления уведомлений
-					noticeCleanChan <- notice
+				//Отправка в канал удаления уведомлений
+				noticeCleanChan <- notice
 
-					this.PrintDevLn("DbReader: ", "Уведомление ", notice.Id, " отправлено в обработку и удаление")
-				}
+				this.PrintDevLn("DbReader: ", "Уведомление ", notice.Id, " отправлено в обработку и удаление")
 			}
+		}
 
 			fmt.Println("DbReader: ", "Обработка закончена")
 
-		case <-this.quitChan:
-			this.quitChan <- true
+		case <-this.quitChanDbReader:
 			return
 
 		}
@@ -119,6 +156,7 @@ func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, re
 		redis.Disconnect()
 		this.wg.Done()
 		fmt.Println("DbCleaner: STOPPED")
+		this.finishedDbCleaner <- true
 	}()
 
 	for {
@@ -129,8 +167,7 @@ func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, re
 			redis.DeleteFromRange("notices", notice.Id)
 			this.PrintDevLn("DbCleaner: ", "Уведомление ", notice.Id, " удалено")
 
-		case <-this.quitChan:
-			this.quitChan <- true
+		case <-this.quitChanDbCleaner:
 			return
 		}
 	}
@@ -146,6 +183,7 @@ func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, mess
 		redis.Disconnect()
 		this.wg.Done()
 		fmt.Println("NoticeWorker: STOPPED")
+		this.finishedNoticeWorker <- true
 	}()
 	for {
 		select {
@@ -166,17 +204,16 @@ func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, mess
 			this.PrintDevLn("NoticeWorker: ", "В группе найдено ", len(group.Members), " получателей")
 
 			// отправляем в MessageWorker все сообщения
-			for _, member := range group.Members {
-				message := models.NewMessage(notice.Id, notice.Author, member, notice.Message)
-				messageChan <- message
+		for _, member := range group.Members {
+			message := models.NewMessage(notice.Id, notice.Author, member, notice.Message)
+			messageChan <- message
 
-				this.PrintDevLn("NoticeWorker: ", "Сообщение для пользователя ", member, " отправлено")
-			}
+			this.PrintDevLn("NoticeWorker: ", "Сообщение для пользователя ", member, " отправлено")
+		}
 
 			this.PrintDevLn("NoticeWorker: ", "Закончил обработку уведоления")
 
-		case <-this.quitChan:
-			this.quitChan <- true
+		case <-this.quitChanNoticeWorker:
 			return
 
 		}
@@ -210,17 +247,17 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
 			receiver := models.FindUser(message.Receiver, redis)
 			this.PrintDevLn("MessageWorker: ", "Найден получатель "+message.Receiver)
 
-			for _, address := range addresses {
-				//Формируем сообщение для оправки в воркер каналов
-				channelMessage := models.NewChannelMessage("1", address.Channel, message.Message, address.Address, receiver.Name)
-				channelMessageChan <- channelMessage
-				this.PrintDevLn("MessageWorker: ", "Отправлено в очередь", channelMessage)
-			}
+		for _, address := range addresses {
+			//Формируем сообщение для оправки в воркер каналов
+			channelMessage := models.NewChannelMessage("1", address.Channel, message.Message, address.Address, receiver.Name)
+			channelMessageChan <- channelMessage
+			this.PrintDevLn("MessageWorker: ", "Отправлено в очередь", channelMessage)
+		}
 
 			this.PrintDevLn("MessageWorker: ", "Message worker ok!", receiver)
 
-		case <-this.quitChan:
-			this.quitChan <- true
+		case <-this.quitChanMessageWorker:
+		this.finishedMessageWorker <- true
 			return
 
 		}
@@ -245,23 +282,41 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 	defer func() {
 		this.wg.Done()
 		fmt.Println("ChannelDispatcher: STOPPED")
-		this.quitChan <- true
+		this.finishedChannelDispatcher <- true
 	}()
 
 	channels := models.GetChannels()
 	chansForChannels := make([]chan *models.ChannelMessage, len(channels))
 
+
+	quitChansForChannels := make([]chan bool, len(channels))
+	finishChansForChannels := make([]chan bool, len(channels))
+
 	for i, channel := range channels {
 		//берем каждый канал, создаем для него chan и запускаем горутину
 		chansForChannels[i] = make(chan *models.ChannelMessage)
-		go this.ChannelMessageWorker(channel, chansForChannels[i])
+		quitChansForChannels[i] = make(chan bool)
+		finishChansForChannels[i] = make(chan bool)
+		go this.ChannelMessageWorker(channel, chansForChannels[i], quitChansForChannels[i], finishChansForChannels[i])
 		this.PrintDevLn("ChannelDispatcher: ", "Создан воркер для канала ", channel.GetName())
 	}
 
 	//запускаем роутеры
 	go this.ChannelRouter(channelMessageChan, channels, chansForChannels)
 
-	<-this.quitChan
+	//ожидаем команды отключения диспетчера
+	<-this.quitChanChannelDispatcher
+
+	//останавливаем роутер и ждем его завершения
+	this.quitChanChannelRouter <- true
+	<-this.finishedChannelRouter
+
+	//останавливаем каналы и ждем завершение каждого
+	for i, _ := range channels {
+		quitChansForChannels[i] <- true
+		<-finishChansForChannels[i]
+	}
+
 }
 
 func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.ChannelMessage, channels []models.Channel, chansForChannels []chan *models.ChannelMessage) {
@@ -270,6 +325,7 @@ func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.Cha
 	defer func() {
 		this.wg.Done()
 		fmt.Println("ChannelRouter: STOPPED")
+		this.finishedChannelRouter <- true
 	}()
 
 	for {
@@ -278,16 +334,15 @@ func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.Cha
 			//возьмем из очереди сообщение
 			this.PrintDevLn("ChannelRouter: ", "Получено сообщение", channelMessage)
 			//переберем все каналы
-			for i, channel := range channels {
-				//если канал соответствует каналу в сообщении, то отправим
-				if channel.GetName() == channelMessage.Channel {
-					chansForChannels[i] <- channelMessage
-					this.PrintDevLn("ChannelRouter: ", "Сообщение отправлено в канал", channelMessage.Channel)
-				}
+		for i, channel := range channels {
+			//если канал соответствует каналу в сообщении, то отправим
+			if channel.GetName() == channelMessage.Channel {
+				chansForChannels[i] <- channelMessage
+				this.PrintDevLn("ChannelRouter: ", "Сообщение отправлено в канал", channelMessage.Channel)
 			}
+		}
 
-		case <-this.quitChan:
-			this.quitChan <- true
+		case <-this.quitChanChannelRouter:
 			return
 		}
 	}
@@ -297,12 +352,13 @@ func (this *ServiceController) ChannelRouter(channelMessageChan chan *models.Cha
 Обработчик сообщений, отправленных в канал: получает адрес и сообщение, запускает метод Channel.Send()
  Метод Channel.Send() должен отформатировать сообщение согласно правилам канала и вызывать соответствующий сервис-провайдер
 */
-func (this *ServiceController) ChannelMessageWorker(channel models.Channel, channelMessageChan chan *models.ChannelMessage) {
+func (this *ServiceController) ChannelMessageWorker(channel models.Channel, channelMessageChan chan *models.ChannelMessage, quitChan, finishChan chan bool) {
 	fmt.Println("ChannelMessageWorker: STARTED ", channel.GetName())
 	this.wg.Add(1)
 	defer func() {
 		this.wg.Done()
 		fmt.Println("ChannelMessageWorker: STOPPED", channel.GetName())
+		finishChan <- true
 	}()
 
 	for {
@@ -312,25 +368,38 @@ func (this *ServiceController) ChannelMessageWorker(channel models.Channel, chan
 			this.PrintDevLn("ChannelMessageWorker: ", "Сообщение отправлено в канал", channelMessage)
 			channel.Send(channelMessage)
 
-		case <-this.quitChan:
-			this.quitChan <- true
+		case <-quitChan:
 			return
 		}
 	}
 }
 
 func (this *ServiceController) Stop() {
-	this.quitChan <- true
+	this.quitChanDbReader <- true
+	<-this.finishedDbReader
+
+	this.quitChanDbCleaner<- true
+	<-this.finishedDbCleaner
+
+	this.quitChanNoticeWorker<- true
+	<-this.finishedNoticeWorker
+
+	this.quitChanMessageWorker<- true
+	<-this.finishedMessageWorker
+
+	this.quitChanChannelDispatcher<- true
+	<-this.finishedChannelDispatcher
+
 	this.wg.Wait()
 }
 
 /**
 вывод сообщений для разработки
  */
-func (this *ServiceController) PrintDevLn(a ...interface{}){
+func (this *ServiceController) PrintDevLn(a ...interface{}) {
 	_ = a
 	runmode := beego.AppConfig.String("runmode") != "dev"
-	if(!runmode) {
+	if (!runmode) {
 		fmt.Println(a...)
 	}
 }
