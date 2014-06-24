@@ -23,7 +23,7 @@ func NewNotice(id string, group string, message string, datetime time.Time, auth
 
 func NewNoticesFromRedis(redis services.Redis) []*Notice {
 
-	currTime :=time.Now().Unix()
+	currTime := time.Now().Unix()
 
 	//Выбирает все записи, которые были до текущего времени
 	results := redis.GetRangeByScore("notices", 0, currTime)

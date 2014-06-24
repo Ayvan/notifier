@@ -10,7 +10,7 @@ import (
 )
 
 type ServiceController struct {
-	wg       *sync.WaitGroup
+	wg               *sync.WaitGroup
 	quitChanDbReader chan bool
 	finishedDbReader chan bool
 
@@ -288,7 +288,6 @@ func (this *ServiceController) ChannelDispatcher(channelMessageChan chan *models
 	channels := models.GetChannels()
 	chansForChannels := make([]chan *models.ChannelMessage, len(channels))
 
-
 	quitChansForChannels := make([]chan bool, len(channels))
 	finishChansForChannels := make([]chan bool, len(channels))
 
@@ -378,16 +377,16 @@ func (this *ServiceController) Stop() {
 	this.quitChanDbReader <- true
 	<-this.finishedDbReader
 
-	this.quitChanDbCleaner<- true
+	this.quitChanDbCleaner <- true
 	<-this.finishedDbCleaner
 
-	this.quitChanNoticeWorker<- true
+	this.quitChanNoticeWorker <- true
 	<-this.finishedNoticeWorker
 
-	this.quitChanMessageWorker<- true
+	this.quitChanMessageWorker <- true
 	<-this.finishedMessageWorker
 
-	this.quitChanChannelDispatcher<- true
+	this.quitChanChannelDispatcher <- true
 	<-this.finishedChannelDispatcher
 
 	this.wg.Wait()
@@ -395,11 +394,11 @@ func (this *ServiceController) Stop() {
 
 /**
 вывод сообщений для разработки
- */
+*/
 func (this *ServiceController) PrintDevLn(a ...interface{}) {
 	_ = a
 	runmode := beego.AppConfig.String("runmode") != "dev"
-	if (!runmode) {
+	if !runmode {
 		fmt.Println(a...)
 	}
 }

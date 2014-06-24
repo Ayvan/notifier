@@ -9,7 +9,7 @@ import (
 type EmailChannel struct {
 	Name     string
 	provider services.ServiceProvider
-	i int64
+	i        int64
 }
 
 func NewEmailChannel() *EmailChannel {
@@ -28,7 +28,7 @@ func (this *EmailChannel) Send(message *ChannelMessage) {
 	this.provider.Send(message.UserName, message.Address, msg)
 	//fmt.Println("EmailChannel.Send: ", "Отправляем сообщение с текстом \"", msg, "\"")
 	this.i++
-	fmt.Println("Отправлено email: ",this.i)
+	fmt.Println("Отправлено email: ", this.i)
 }
 
 func (this *EmailChannel) GetName() string {

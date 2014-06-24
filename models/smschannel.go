@@ -8,7 +8,7 @@ import (
 type SmsChannel struct {
 	Name     string
 	provider services.ServiceProvider
-	i int64
+	i        int64
 }
 
 func NewSmsChannel() *SmsChannel {
@@ -28,7 +28,7 @@ func (this *SmsChannel) Send(message *ChannelMessage) {
 	this.provider.Send(message.UserName, message.Address, msg)
 	//fmt.Println("SmsChannel.Send: ", "Отправляем SMS с текстом \"", msg, "\"")
 	this.i++
-	fmt.Println("Отправлено sms: ",this.i)
+	fmt.Println("Отправлено sms: ", this.i)
 }
 
 func (this *SmsChannel) GetName() string {
