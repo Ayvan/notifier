@@ -82,9 +82,9 @@ func main() {
 		connection.Send(
 			"HMSET",
 			"user:"+user+":addresses",
-			"Mail",
+			"email",
 			"test@example.com",
-			"Phone",
+			"phone",
 			"00000000",
 		)
 
