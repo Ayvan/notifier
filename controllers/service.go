@@ -397,8 +397,8 @@ func (this *ServiceController) Stop() {
 */
 func (this *ServiceController) PrintDevLn(a ...interface{}) {
 	_ = a
-	runmode := beego.AppConfig.String("runmode") != "dev"
-	if !runmode {
+	devtrace, _ := beego.AppConfig.Bool("devtrace")
+	if devtrace {
 		fmt.Println(a...)
 	}
 }
