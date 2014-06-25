@@ -20,7 +20,7 @@ func NewEmailChannel() *EmailChannel {
 		beego.AppConfig.String("gmailHost"),
 		beego.AppConfig.String("gmailPort"),
 		runmode)
-	return &EmailChannel{"Mail", provider, 0}
+	return &EmailChannel{"email", provider, 0}
 }
 
 func (this *EmailChannel) Send(message *ChannelMessage) {
