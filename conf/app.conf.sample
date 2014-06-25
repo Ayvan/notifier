@@ -1,6 +1,7 @@
 appname = iforgetgo
 httpport = 8080
 runmode = dev
+devtrace = true
 
 redisHost = 127.0.0.1
 redisPort = 6379
