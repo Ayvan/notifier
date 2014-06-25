@@ -20,7 +20,7 @@ func NewSmsChannel() *SmsChannel {
 		beego.AppConfig.String("sms_gate_from"),
 		runmode)
 
-	return &SmsChannel{"Phone", provider, 0}
+	return &SmsChannel{"phone", provider, 0}
 }
 
 func (this *SmsChannel) Send(message *ChannelMessage) {
