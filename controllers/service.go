@@ -161,12 +161,9 @@ func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, re
 
 	for {
 		select {
-
 		case notice := <-noticeCleanChan:
-			redis.Delete(notice.Id)
 			redis.DeleteFromRange("notices", notice.Id)
 			this.PrintDevLn("DbCleaner: ", "Уведомление ", notice.Id, " удалено")
-
 		case <-this.quitChanDbCleaner:
 			return
 		}
