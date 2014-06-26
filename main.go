@@ -27,6 +27,6 @@ func startService() {
 }
 
 func main() {
-	startService()
-	beego.Run()
+	startService() //
+	//beego.Run()
 }

@@ -28,7 +28,7 @@ func (this *SmsServiceProvider) Send(userName, address, message string) error {
 	values.Add("to", address)
 	values.Add("from", this.from)
 	values.Add("coding", "2")
-	values.Add("text", message.Message)
+	values.Add("text", message)
 	values.Add("priority", "0")
 	values.Add("mclass", "1")
 	values.Add("dlrmask", "31")

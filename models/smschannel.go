@@ -2,7 +2,8 @@ package models
 
 import (
 	"fmt"
-//	"iforgetgo/services"
+	"github.com/astaxie/beego"
+	"iforgetgo/services"
 )
 
 type SmsChannel struct {

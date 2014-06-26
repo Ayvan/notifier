@@ -104,7 +104,8 @@ func (this *ServiceController) Run() {
 отправляет их в канал обработки уведомлений и канал удаления
 */
 func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCleanChan chan *models.Notice, redis services.Redis) {
-	fmt.Println("DbReader: ", "Запущен")
+	this.wg.Add(1)
+	fmt.Println("DbReader: STARTED")
 	redis.Connect()
 	defer func() {
 		redis.Disconnect()
@@ -150,7 +151,8 @@ func (this *ServiceController) DbReader(noticeChan chan *models.Notice, noticeCl
 "Чистильщик" БД, получает из chan уведомления и удаляет их
 */
 func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, redis services.Redis) {
-	fmt.Println("DbCleaner: ", "Запущен")
+	this.wg.Add(1)
+	fmt.Println("DbCleaner: STARTED")
 	redis.Connect()
 	defer func() {
 		redis.Disconnect()
@@ -174,7 +176,8 @@ func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, re
 Обработчик уведомлений: получает уведомление, из Group получает список пользователей и отправляет в обработчик сообщений
 */
 func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, messageChan chan *models.Message, redis services.Redis) {
-	fmt.Println("NoticeWorker: ", "Запущен")
+	this.wg.Add(1)
+	fmt.Println("NoticeWorker: STARTED")
 	redis.Connect()
 	defer func() {
 		redis.Disconnect()
