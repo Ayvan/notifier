@@ -26,7 +26,7 @@ func (this *SmsServiceProvider) Send(userName, address, message string) error {
 	values.Set("username", this.user)
 	values.Add("password", this.pass)
 	values.Add("to", address)
-	values.Add("from", this.user)
+	values.Add("from", this.from)
 	values.Add("coding", "2")
 	values.Add("text", message.Message)
 	values.Add("priority", "0")
