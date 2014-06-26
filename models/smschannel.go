@@ -25,10 +25,14 @@ func NewSmsChannel() *SmsChannel {
 
 func (this *SmsChannel) Send(message *ChannelMessage) {
 	msg := this.prepareMessage(message.Message)
-	this.provider.Send(message.UserName, message.Address, msg)
-	//fmt.Println("SmsChannel.Send: ", "Отправляем SMS с текстом \"", msg, "\"")
+	err := this.provider.Send(message.UserName, message.Address, msg)
 	this.i++
-	fmt.Println("Отправлено sms: ", this.i)
+	if err == nil {
+		fmt.Println("Отправлено sms: ", this.i)
+	} else {
+		fmt.Println("Ошибка отправки sms: ", err)
+	}
+
 }
 
 func (this *SmsChannel) GetName() string {

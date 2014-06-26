@@ -1,8 +1,9 @@
 package models
 
-import "time"
 import (
 	"iforgetgo/services"
+	"time"
+	"strconv"
 )
 
 type Notice struct {
@@ -33,15 +34,33 @@ func NewNoticesFromRedis(redis services.Redis) []*Notice {
 
 		val := redis.Get(noticeKey)
 
-		if len(val) >= 8 {
+		var group string
+		var message string
+		var datetime string
+		var author string
 
-			group := val[1]
-			message := val[3]
-			//		time := val[5]
-			author := val[7]
-
-			notices[i] = NewNotice(noticeKey, group, message, time.Now(), author)
+		for j := 0; j < len(val); j+=2 {
+			switch val[j] {
+			case "group":
+				group = val[j+1]
+			case "message":
+				message = val[j+1]
+			case "datetime":
+				datetime = val[j+1]
+			case "author":
+				author = val[j+1]
+			}
 		}
+
+		intTime, err := strconv.ParseInt(datetime, 10, 64)
+		var localTime time.Time
+		if err == nil {
+			localTime = time.Unix(intTime, 0)
+		} else {
+			localTime = time.Now()
+		}
+
+		notices[i] = NewNotice(noticeKey, group, message, localTime, author)
 	}
 
 	return notices

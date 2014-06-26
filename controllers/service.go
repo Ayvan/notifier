@@ -242,11 +242,15 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
 			this.PrintDevLn("MessageWorker: ", "Найдено ", len(addresses), " каналов")
 			//Получатель
 			receiver := models.FindUser(message.Receiver, redis)
+			if receiver == nil {
+				this.PrintDevLn("MessageWorker: ", "Не найден получатель! "+message.Receiver)
+				continue
+			}
 			this.PrintDevLn("MessageWorker: ", "Найден получатель "+message.Receiver)
 
 		for _, address := range addresses {
 			//Формируем сообщение для оправки в воркер каналов
-			channelMessage := models.NewChannelMessage("1", address.Channel, message.Message, address.Address, receiver.Name)
+			channelMessage := models.NewChannelMessage(message.Id, address.Channel, message.Message, address.Address, receiver.Name)
 			channelMessageChan <- channelMessage
 			this.PrintDevLn("MessageWorker: ", "Отправлено в очередь", channelMessage)
 		}

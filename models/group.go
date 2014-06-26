@@ -20,11 +20,23 @@ func NewGroup(id string, name string, owner string, members []string) *Group {
 
 func FindGroup(id string, redis services.Redis) *Group {
 	//fmt.Println("FindGroup:", id)
-	val := redis.Get(id)
+	group := redis.Get(id)
 	members := redis.GetMembers(id + ":members")
 
-	if len(val) >= 3 {
-		return NewGroup(val[0], val[1], val[2], members)
+	var name string
+	var author string
+
+	for j := 0; j < len(group); j+=2 {
+		switch group[j] {
+		case "name":
+			name = group[j+1]
+		case "author":
+			author = group[j+1]
+		}
+	}
+
+	if len(group) >= 2 {
+		return NewGroup(id, name, author, members)
 	}
 
 	return nil
