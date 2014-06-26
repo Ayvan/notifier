@@ -25,10 +25,13 @@ func NewEmailChannel() *EmailChannel {
 
 func (this *EmailChannel) Send(message *ChannelMessage) {
 	msg := this.prepareMessage(message.Message)
-	this.provider.Send(message.UserName, message.Address, msg)
-	//fmt.Println("EmailChannel.Send: ", "Отправляем сообщение с текстом \"", msg, "\"")
-	this.i++
-	fmt.Println("Отправлено email: ", this.i)
+	err := this.provider.Send(message.UserName, message.Address, msg)
+	if err == nil {
+		fmt.Println("Отправлено email: ", this.i)
+		this.i++
+	} else {
+		fmt.Println("Ошибка отправки email", err)
+	}
 }
 
 func (this *EmailChannel) GetName() string {
