@@ -45,7 +45,7 @@ func main() {
 			"group:"+group,
 			"message",
 			"this is message",
-			"time",
+			"datetime",
 			timestamp,
 			"author",
 			"user:"+user,
@@ -57,7 +57,7 @@ func main() {
 		connection.Send(
 			"HMSET",
 			"group:"+group,
-			"owner",
+			"author",
 			"user:"+user,
 			"name",
 			"group "+strconv.Itoa(i+1),
