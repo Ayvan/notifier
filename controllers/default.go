@@ -3,8 +3,10 @@ package controllers
 import (
 	"fmt"
 	"github.com/astaxie/beego"
-	"notifier/models"
 	"notifier/services"
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
 )
 
 type MainController struct {
@@ -15,19 +17,28 @@ type TestController struct {
 	beego.Controller
 }
 
-func (this *TestController) Get() {
-
-	users := models.GetParticipants("1")
-
-	fmt.Printf("%v", users)
-
-	this.Data["Website"] = "";
-	this.Data["Email"] = "";
-	this.TplNames = "index.tpl"
-}
 
 
-func (this *MainController) Get() {
+func (this *MainController) Post() {
+
+	// запускаем проверку подписи (ЭЦП)
+	if this.checkSignature() != true {
+
+		response := struct {
+				Code    int
+				Message string
+			} {
+			-2, "signature error",
+		}
+
+		this.PrintDevLn("MainController: Signature error!")
+
+		this.Data["json"] = &response;
+		this.ServeJson()
+		return
+	}
+
+	this.PrintDevLn("MainController: Signature check success!")
 
 	// получим параметр "действией", он указывает, что требуется сделать
 	action := this.GetString("action");
@@ -61,7 +72,7 @@ func (this *MainController) addNotice(redis services.Redis) {
 	// объявим структуру, отвечающую кодом 0 и сообщением "успешно"
 	noticeId := this.GetString("id");
 	noticeMessage := this.GetString("message")
-	noticeTime := this.GetString("noticeTime")
+	noticeTime := this.GetString("time")
 
 	redis.AddNotice(noticeId, noticeMessage, noticeTime)
 
@@ -95,9 +106,8 @@ func (this *MainController) deleteNotice(redis services.Redis) {
 
 func (this *MainController) editNotice(redis services.Redis) {
 	noticeId := this.GetString("id");
-
 	noticeMessage := this.GetString("message")
-	noticeTime := this.GetString("noticeTime")
+	noticeTime := this.GetString("time")
 
 	// удаляем старое уведомление из очереди и из списка уведомлений
 	redis.Delete("notice:"+noticeId)
@@ -117,3 +127,31 @@ func (this *MainController) editNotice(redis services.Redis) {
 	this.ServeJson()
 }
 
+func (this *MainController) checkSignature() bool{
+	action := this.GetString("action");
+	noticeId := this.GetString("id");
+	noticeMessage := this.GetString("message")
+	noticeTime := this.GetString("time")
+	signature := this.GetString("signature")
+
+	key := []byte(beego.AppConfig.String("apiSecretKey"))
+	mac := hmac.New(sha1.New,key)
+	macMessage := []byte(action+noticeId+noticeMessage+noticeTime)
+	mac.Write(macMessage)
+	expectedMAC := mac.Sum(nil)
+	signatureMAC, _ := base64.StdEncoding.DecodeString(signature)
+	isMacEquals := hmac.Equal(signatureMAC,expectedMAC)
+
+	return isMacEquals
+}
+
+/**
+	Вывод сообщений для разработки, выводит в консоль сообщения только если включен параметр devtrace
+*/
+func (this *MainController) PrintDevLn(a ...interface{}) {
+	_ = a
+	devtrace, _ := beego.AppConfig.Bool("devtrace")
+	if devtrace {
+		fmt.Println(a...)
+	}
+}

@@ -34,11 +34,6 @@ func (this *SmtpMailServiceProvider) Send(userName, address, message string) err
 	body := message
 	subject := "Напоминание"
 
-	//если не "боевой" режим, то дальше ничего не делаем
-	if !this.runmode {
-		return nil
-	}
-
 	header := make(map[string]string)
 	header["From"] = from.String()
 	header["To"] = to.String()

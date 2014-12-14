@@ -195,7 +195,7 @@ func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, mess
 
 		case notice := <-noticeChan: // читаем notice
 			this.PrintDevLn("NoticeWorker: ", "Обработка уведомления ", notice.Id)
-			continue
+
 			// получаем список пользователей, подписанных на событие
 			users := models.GetParticipants(notice.Id)
 

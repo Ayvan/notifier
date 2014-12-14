@@ -1,7 +1,6 @@
 package models
 
 import (
-	//"notifier/services"
 	"github.com/astaxie/beego"
 	"encoding/json"
 	"github.com/go-av/curl"

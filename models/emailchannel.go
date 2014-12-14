@@ -26,9 +26,10 @@ func NewEmailChannel() *EmailChannel {
 func (this *EmailChannel) Send(message *ChannelMessage) {
 	msg := this.prepareMessage(message.Message)
 	err := this.provider.Send(message.UserName, message.Address, msg)
+
 	if err == nil {
-		fmt.Println("Отправлено email: ", this.i)
 		this.i++
+		fmt.Println("Отправлено email: ", this.i)
 	} else {
 		fmt.Println("Ошибка отправки email", err)
 	}
