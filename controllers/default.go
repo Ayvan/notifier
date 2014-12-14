@@ -69,22 +69,7 @@ func (this *MainController) Post() {
 }
 
 func (this *MainController) addNotice(redis services.Redis) {
-	// объявим структуру, отвечающую кодом 0 и сообщением "успешно"
-	noticeId := this.GetString("id");
-	noticeMessage := this.GetString("message")
-	noticeTime := this.GetString("time")
-
-	redis.AddNotice(noticeId, noticeMessage, noticeTime)
-
-	response := struct {
-			Code    int
-			Message string
-		} {
-		0, "success",
-	}
-
-	this.Data["json"] = &response;
-	this.ServeJson()
+	this.editNotice(redis)
 }
 
 func (this *MainController) deleteNotice(redis services.Redis) {
@@ -92,6 +77,8 @@ func (this *MainController) deleteNotice(redis services.Redis) {
 
 	redis.Delete("notice:"+noticeId)
 	redis.DeleteFromRange("notices","notice:"+noticeId)
+
+	this.PrintDevLn("MainController: удалено событие "+noticeId)
 
 	response := struct {
 			Code    int
@@ -108,6 +95,14 @@ func (this *MainController) editNotice(redis services.Redis) {
 	noticeId := this.GetString("id");
 	noticeMessage := this.GetString("message")
 	noticeTime := this.GetString("time")
+
+	result := redis.Get("notice:"+noticeId)
+
+	if len(result) >=1 {
+		this.PrintDevLn("MainController: отредактировано событие "+noticeId)
+	} else {
+		this.PrintDevLn("MainController: новое событие "+noticeId)
+	}
 
 	// удаляем старое уведомление из очереди и из списка уведомлений
 	redis.Delete("notice:"+noticeId)
