@@ -3,7 +3,7 @@ package models
 import (
 	"fmt"
 	"github.com/astaxie/beego"
-	"iforgetgo/services"
+	"notifier/services"
 )
 
 type EmailChannel struct {
@@ -20,7 +20,7 @@ func NewEmailChannel() *EmailChannel {
 		beego.AppConfig.String("gmailHost"),
 		beego.AppConfig.String("gmailPort"),
 		runmode)
-	return &EmailChannel{"email", provider, 0}
+	return &EmailChannel{"Email", provider, 0}
 }
 
 func (this *EmailChannel) Send(message *ChannelMessage) {

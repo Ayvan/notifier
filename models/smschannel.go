@@ -3,7 +3,7 @@ package models
 import (
 	"fmt"
 	"github.com/astaxie/beego"
-	"iforgetgo/services"
+	"notifier/services"
 )
 
 type SmsChannel struct {
@@ -21,7 +21,7 @@ func NewSmsChannel() *SmsChannel {
 		beego.AppConfig.String("sms_gate_from"),
 		runmode)
 
-	return &SmsChannel{"phone", provider, 0}
+	return &SmsChannel{"Phone", provider, 0}
 }
 
 func (this *SmsChannel) Send(message *ChannelMessage) {

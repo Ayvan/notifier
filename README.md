@@ -33,6 +33,8 @@ go get github.com/garyburd/redigo/redis
 
 go get github.com/beego/bee
 
+go get github.com/go-av/curl
+
 sudo ln -s /home/USER/go/bin/bee /usr/bin
 
 

@@ -2,24 +2,26 @@ package main
 
 import (
 	"fmt"
-	"iforgetgo/controllers"
-	_ "iforgetgo/routers"
+	"notifier/controllers"
+	_ "notifier/routers"
 	"os"
 	"os/signal"
+	"github.com/astaxie/beego"
 )
 
 func startService() {
 
 	c := controllers.ServiceController{}
+	// инициализируем сервис
 	c.InitService()
-	// for i:=0;i<N;i++ { запуск нескольких горутин воркеров
-
+	// запускаем сервис
 	c.Run()
 
+	// создаем канал, получающий событие ОС "завершение процесса" и подписываемся на событие
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, os.Kill)
 
-	// останов сервера по Ctrl-C
+	// останов сервера по Ctrl-C, если в этот канал пришел сигнал - требуется инициировать остановку сервиса
 	<-sigChan
 	c.Stop()
 	fmt.Println("Сервер успешно остановлен.")
@@ -27,6 +29,8 @@ func startService() {
 }
 
 func main() {
-	startService() //
-	//beego.Run()
+	// запуск HTTP-сервера
+	go beego.Run()
+	// запуск сервиса оповещений
+	startService()
 }

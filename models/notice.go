@@ -1,25 +1,20 @@
 package models
 
 import (
-	"iforgetgo/services"
+	"notifier/services"
 	"time"
 	"strconv"
 )
 
 type Notice struct {
 	Id      string
-	Group   string
 	Message string
-
 	Datetime time.Time
-	Author   string
-	//Group *Group
-	//Author *User
 }
 
-func NewNotice(id string, group string, message string, datetime time.Time, author string) *Notice {
+func NewNotice(id string, message string, datetime time.Time) *Notice {
 
-	return &Notice{id, group, message, datetime, author}
+	return &Notice{id, message, datetime}
 }
 
 func NewNoticesFromRedis(redis services.Redis) []*Notice {
@@ -34,21 +29,18 @@ func NewNoticesFromRedis(redis services.Redis) []*Notice {
 
 		val := redis.Get(noticeKey)
 
-		var group string
+		var noticeId string
 		var message string
 		var datetime string
-		var author string
 
 		for j := 0; j < len(val); j+=2 {
 			switch val[j] {
-			case "group":
-				group = val[j+1]
+			case "noticeId":
+				noticeId = val[j+1]
 			case "message":
 				message = val[j+1]
 			case "datetime":
 				datetime = val[j+1]
-			case "author":
-				author = val[j+1]
 			}
 		}
 
@@ -60,7 +52,7 @@ func NewNoticesFromRedis(redis services.Redis) []*Notice {
 			localTime = time.Now()
 		}
 
-		notices[i] = NewNotice(noticeKey, group, message, localTime, author)
+		notices[i] = NewNotice(noticeId, message, localTime)
 	}
 
 	return notices

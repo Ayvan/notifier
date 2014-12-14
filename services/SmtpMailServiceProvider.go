@@ -29,7 +29,7 @@ func NewSmtpMailServiceProvider(username, password, host, port string, runmode b
 }
 
 func (this *SmtpMailServiceProvider) Send(userName, address, message string) error {
-	from := mail.Address{"iForget", this.username}
+	from := mail.Address{"Notifier", this.username}
 	to := mail.Address{userName, address}
 	body := message
 	subject := "Напоминание"

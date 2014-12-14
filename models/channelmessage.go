@@ -1,7 +1,7 @@
 package models
 
 type ChannelMessage struct {
-	Id       string
+	NoticeId       string
 	Channel  string
 	Message  string
 	Address  string
@@ -11,6 +11,6 @@ type ChannelMessage struct {
 
 }
 
-func NewChannelMessage(id string, channel string, message string, address string, username string) *ChannelMessage {
-	return &ChannelMessage{id, channel, message, address, username}
+func NewChannelMessage(noticeId string, channel string, message string, address string, username string) *ChannelMessage {
+	return &ChannelMessage{noticeId, channel, message, address, username}
 }

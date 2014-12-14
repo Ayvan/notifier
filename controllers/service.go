@@ -3,8 +3,8 @@ package controllers
 import (
 	"fmt"
 	"github.com/astaxie/beego"
-	"iforgetgo/models"
-	"iforgetgo/services"
+	"notifier/models"
+	"notifier/services"
 	"sync"
 	"time"
 )
@@ -32,6 +32,9 @@ type ServiceController struct {
 	beego.Controller
 }
 
+/**
+	Инициализатор сервиса, создает каналы
+ */
 func (this *ServiceController) InitService() {
 	this.wg = &sync.WaitGroup{}
 
@@ -51,7 +54,9 @@ func (this *ServiceController) InitService() {
 	this.finishedChannelDispatcher = make(chan bool, 1)
 	this.finishedChannelRouter = make(chan bool, 1)
 }
-
+/**
+	Запуск сервиса
+ */
 func (this *ServiceController) Run() {
 	/******************************************Создание каналов*******************************************************/
 	/**
@@ -88,7 +93,7 @@ func (this *ServiceController) Run() {
 	//запускаем процесс, удаляющий из БД обработанные записи
 	go this.DbCleaner(noticeCleanChan, redis)
 
-	//запускаем воркер нотификаций - выбирает получателей из группы для отправки им сообщений
+	//запускаем воркер нотификаций - запрашивает у системы-пользователя получателей для отправки им сообщений
 	go this.NoticeWorker(noticeChan, messageChan, redis)
 
 	//запусукаем воркер сообщений - выбирает каналы пользователя, в которые отправлять сообщение
@@ -164,7 +169,7 @@ func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, re
 	for {
 		select {
 		case notice := <-noticeCleanChan:
-			redis.DeleteFromRange("notices", notice.Id)
+			redis.DeleteFromRange("notices", "notice:"+notice.Id)
 			this.PrintDevLn("DbCleaner: ", "Уведомление ", notice.Id, " удалено")
 		case <-this.quitChanDbCleaner:
 			return
@@ -173,7 +178,7 @@ func (this *ServiceController) DbCleaner(noticeCleanChan chan *models.Notice, re
 }
 
 /**
-Обработчик уведомлений: получает уведомление, из Group получает список пользователей и отправляет в обработчик сообщений
+Обработчик уведомлений: получает уведомление, запрашивает список пользователей и отправляет в обработчик сообщений
 */
 func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, messageChan chan *models.Message, redis services.Redis) {
 	this.wg.Add(1)
@@ -190,22 +195,22 @@ func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, mess
 
 		case notice := <-noticeChan: // читаем notice
 			this.PrintDevLn("NoticeWorker: ", "Обработка уведомления ", notice.Id)
+			continue
+			// получаем список пользователей, подписанных на событие
+			users := models.GetParticipants(notice.Id)
 
-			// получаем группу из нотиса
-			group := models.FindGroup(notice.Group, redis)
-
-			if group == nil {
+			if users == nil {
 				continue
 			}
 
-			this.PrintDevLn("NoticeWorker: ", "Найдена группа ", group.Id)
+			this.PrintDevLn("NoticeWorker: ", "Найдены группа пользователей для оповещения ", users.NoticeId)
 
 			//получаем список пользователей группы
-			this.PrintDevLn("NoticeWorker: ", "В группе найдено ", len(group.Members), " получателей")
+			this.PrintDevLn("NoticeWorker: ", "В группе найдено ", len(users.Users), " получателей")
 
 			// отправляем в MessageWorker все сообщения
-		for _, member := range group.Members {
-			message := models.NewMessage(notice.Id, notice.Author, member, notice.Message)
+		for _, member := range users.Users {
+			message := models.NewMessage(notice.Id, notice.Message, member)
 			messageChan <- message
 
 			this.PrintDevLn("NoticeWorker: ", "Сообщение для пользователя ", member, " отправлено")
@@ -222,8 +227,7 @@ func (this *ServiceController) NoticeWorker(noticeChan chan *models.Notice, mess
 
 /**
 Обработчик сообщений: получает сообщение и получателя,
-Получает список каналов и адресов каналов для получателя
-и отправляет сообщения в обработчик каналов, передавая адрес получателя, канал, имя получателя, текст сообщения
+Отправляет сообщения в обработчик каналов, передавая адрес получателя, канал, имя получателя, текст сообщения
 */
 func (this *ServiceController) MessageWorker(messageChan chan *models.Message, channelMessageChan chan *models.ChannelMessage, redis services.Redis) {
 	this.wg.Add(1)
@@ -241,36 +245,29 @@ func (this *ServiceController) MessageWorker(messageChan chan *models.Message, c
 
 			this.PrintDevLn("MessageWorker: ", "Принял сообщение")
 			//Каналы и адреса
-			addresses := models.FindUserAddresses(message.Receiver, redis)
+			addresses := message.Receiver.Addresses;
 			this.PrintDevLn("MessageWorker: ", "Найдено ", len(addresses), " каналов")
-			//Получатель
-			receiver := models.FindUser(message.Receiver, redis)
-			if receiver == nil {
-				this.PrintDevLn("MessageWorker: ", "Не найден получатель! "+message.Receiver)
+
+			if addresses == nil {
+				this.PrintDevLn("MessageWorker: ", "Не найдены адреса! "+message.Receiver.Name)
 				continue
 			}
-			this.PrintDevLn("MessageWorker: ", "Найден получатель "+message.Receiver)
+			this.PrintDevLn("MessageWorker: ", "Найден получатель "+message.Receiver.Name)
 
 		for _, address := range addresses {
 			//Формируем сообщение для оправки в воркер каналов
-			channelMessage := models.NewChannelMessage(message.Id, address.Channel, message.Message, address.Address, receiver.Name)
+			channelMessage := models.NewChannelMessage(message.NoticeId, address.Channel, message.Message, address.Address, message.Receiver.Name)
 			channelMessageChan <- channelMessage
 			this.PrintDevLn("MessageWorker: ", "Отправлено в очередь", channelMessage)
 		}
 
-			this.PrintDevLn("MessageWorker: ", "Message worker ok!", receiver)
+			this.PrintDevLn("MessageWorker: ", "Message worker ok!", message.Receiver.Name)
 
 		case <-this.quitChanMessageWorker:
 		this.finishedMessageWorker <- true
 			return
 
 		}
-
-		/**
-		получает пользователя (ID) кому отправить
-		запрашивает у UserModel список каналов
-		отправляет в ChannelDispatcher сообщение и номер канала
-		*/
 	}
 
 }
@@ -377,7 +374,16 @@ func (this *ServiceController) ChannelMessageWorker(channel models.Channel, chan
 	}
 }
 
+/**
+	Последовательная остановка параллельно работающих служб сервиса.
+	Каждой службе по-очереди отправляется сообщение, что требуется завершить работу,
+	служба заканчивает текущую работу (без потери данных) и отвечает, что работа завершена,
+	затем команда завершения передается следующей службе.
+	Последовательность остановки служб сервиса сделана таким образом, что остановка происходит в порядке работы
+	конвейера данных.
+ */
 func (this *ServiceController) Stop() {
+
 	this.quitChanDbReader <- true
 	<-this.finishedDbReader
 
@@ -397,7 +403,7 @@ func (this *ServiceController) Stop() {
 }
 
 /**
-вывод сообщений для разработки
+	Вывод сообщений для разработки, выводит в консоль сообщения только если включен параметр devtrace
 */
 func (this *ServiceController) PrintDevLn(a ...interface{}) {
 	_ = a
