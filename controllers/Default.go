@@ -18,6 +18,17 @@ type TestController struct {
 }
 
 
+func (this *MainController) Get() {
+	response := struct {
+			Code    int
+			Message string
+		} {
+		-3, "only POST requests are allowed ",
+	}
+
+	this.Data["json"] = &response;
+	this.ServeJson()
+}
 
 func (this *MainController) Post() {
 

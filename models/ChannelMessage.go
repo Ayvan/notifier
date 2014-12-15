@@ -6,9 +6,6 @@ type ChannelMessage struct {
 	Message  string
 	Address  string
 	UserName string
-	//Channel *Channel
-	//Message *Message
-
 }
 
 func NewChannelMessage(noticeId string, channel string, message string, address string, username string) *ChannelMessage {

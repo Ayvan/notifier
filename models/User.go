@@ -7,6 +7,18 @@ import (
 
 )
 
+type User struct {
+	Name string
+	Addresses []UserAddresses
+}
+
+
+type UserAddresses struct {
+	Channel string
+	Address string
+}
+
+
 type Users struct {
 	NoticeId      string
 	Users []User

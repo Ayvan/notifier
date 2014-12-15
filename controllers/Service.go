@@ -99,7 +99,7 @@ func (this *ServiceController) Run() {
 	//запусукаем воркер сообщений - выбирает каналы пользователя, в которые отправлять сообщение
 	go this.MessageWorker(messageChan, channelMessageChan, redis)
 
-	//запусаем диспетчер каналов - создает chan для каждого канала и воркеры для обработки этих chan
+	//запускаем диспетчер каналов - создает chan для каждого канала и воркеры для обработки этих chan
 	go this.ChannelDispatcher(channelMessageChan)
 
 }
