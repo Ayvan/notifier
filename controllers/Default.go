@@ -23,7 +23,7 @@ func (this *MainController) Get() {
 			Code    int
 			Message string
 		} {
-		-3, "only POST requests are allowed ",
+		-3, "only POST requests are allowed",
 	}
 
 	this.Data["json"] = &response;
