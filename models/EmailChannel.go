@@ -29,9 +29,9 @@ func (this *EmailChannel) Send(message *ChannelMessage) {
 
 	if err == nil {
 		this.i++
-		fmt.Println("Отправлено email: ", this.i)
+		fmt.Println("EmailChannel: Отправлено email: ", this.i)
 	} else {
-		fmt.Println("Ошибка отправки email", err)
+		fmt.Println("EmailChannel: Ошибка отправки email", err)
 	}
 }
 

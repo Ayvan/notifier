@@ -2,9 +2,12 @@ package models
 
 import (
 	"github.com/astaxie/beego"
+	"notifier/services/curl"
 	"encoding/json"
-	"github.com/go-av/curl"
-
+	"crypto/sha1"
+	"crypto/hmac"
+	"fmt"
+	"encoding/base64"
 )
 
 type User struct {
@@ -30,12 +33,19 @@ func NewUsers(noticeId string, users []User) *Users {
 
 func GetParticipants(noticeId string) *Users {
 
+	key := []byte(beego.AppConfig.String("apiSecretKey"))
+	mac := hmac.New(sha1.New,key)
+	macMessage := []byte("GetParticipants"+noticeId)
+	mac.Write(macMessage)
+	signature := base64.StdEncoding.EncodeToString((mac.Sum(nil)))
+
 	// берем адрес из конфига
-	url := beego.AppConfig.String("apiGetParticipants")+noticeId
+	url := beego.AppConfig.String("apiGetParticipants")+"id="+noticeId+"&signature="+signature
 
-	err, str := curl.String(url)
+	err, str, resp := curl.String(url,"timeout=10")
 
-	if err != nil {
+	if err != nil || resp.StatusCode != 200 {
+		fmt.Println("User: Ошибка получения данных пользователя. Error: ", err, " HttpStatusCode: ", resp.StatusCode)
 		return nil
 	}
 

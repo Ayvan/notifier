@@ -29,9 +29,9 @@ func (this *SmsChannel) Send(message *ChannelMessage) {
 	err := this.provider.Send(message.UserName, message.Address, msg)
 	this.i++
 	if err == nil {
-		fmt.Println("Отправлено sms: ", this.i)
+		fmt.Println("SmsChannel: Отправлено sms: ", this.i)
 	} else {
-		fmt.Println("Ошибка отправки sms: ", err)
+		fmt.Println("SmsChannel: Ошибка отправки sms: ", err)
 	}
 
 }
