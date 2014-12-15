@@ -51,7 +51,7 @@ func (this *MainController) Post() {
 
 	this.PrintDevLn("MainController: Signature check success!")
 
-	// получим параметр "действией", он указывает, что требуется сделать
+	// получим параметр "действие", он указывает, что требуется сделать
 	action := this.GetString("action");
 
 	redis := services.NewRedis(beego.AppConfig.String("redisHost"), beego.AppConfig.String("redisPort"))
