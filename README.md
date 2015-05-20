@@ -47,7 +47,7 @@ git clone https://github.com/Ayvan/notifier.git
 
 **Config**
 
-cp /home/USER/go/src/notifier/config/app.conf.sample /home/USER/go/src/iforgetgo/config/app.conf
+cp /home/USER/go/src/notifier/config/app.conf.sample /home/USER/go/src/notifier/config/app.conf
 
 **Start:**
 
